@@ -42,17 +42,15 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 	}
 
+	token, err := app.createToken(user.ID)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+	}
+
 	payload := jsonResponse{
 		Error:   false,
 		Message: fmt.Sprintf("Logged in user %s", requestPayload.Email),
-		//Data: User{
-		//	ID:        1,
-		//	FirstName: "Jack",
-		//	LastName:  "Smith",
-		//	Email:     "jack@smith.com",
-		//	Active:    1,
-		//},
-		Data: user,
+		Data:    token,
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
@@ -71,11 +69,10 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newUser := data.User{
-		Email:     requestPayload.Email,
-		Password:  requestPayload.Password,
-		FirstName: "Degan",
-		LastName:  "Will",
-		Active:    1,
+		Email:    requestPayload.Email,
+		Password: requestPayload.Password,
+		Active:   1,
+		Role:     "startup",
 	}
 
 	// validate against database
