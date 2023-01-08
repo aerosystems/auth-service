@@ -133,25 +133,46 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newUser := data.User{
-		Email:    email,
-		Password: requestPayload.Password,
-		Active:   false,
-		Role:     requestPayload.Role,
-	}
+	var payload jsonResponse
 
-	// validate against database
-	newUserId, err := app.Models.User.Insert(newUser)
-
-	if err != nil {
-		_ = app.errorJSON(w, err, http.StatusBadRequest)
-		return
-	}
-
-	payload := jsonResponse{
-		Error:   false,
-		Message: fmt.Sprintf("Registered user with Id: %d", newUserId),
-		Data:    newUser,
+	//checking if email is existing in inactive users
+	userInactive, _ := app.Models.UserInactive.GetByEmail(email)
+	if userInactive == nil {
+		// creating new inactive user
+		newUser := data.User{
+			Email:    email,
+			Password: requestPayload.Password,
+			Role:     requestPayload.Role,
+		}
+		newUserId, err := app.Models.UserInactive.Insert(newUser)
+		if err != nil {
+			_ = app.errorJSON(w, err, http.StatusBadRequest)
+			return
+		}
+		payload = jsonResponse{
+			Error:   false,
+			Message: fmt.Sprintf("Registered user with Id: %d", newUserId),
+			Data:    newUser,
+		}
+	} else {
+		// updating password for inactive user
+		err := userInactive.ResetPassword(requestPayload.Password)
+		if err != nil {
+			_ = app.errorJSON(w, err, http.StatusBadRequest)
+			return
+		}
+		// updating other data for inactive user
+		userInactive.Role = requestPayload.Role
+		err = userInactive.Update()
+		if err != nil {
+			_ = app.errorJSON(w, err, http.StatusBadRequest)
+			return
+		}
+		payload = jsonResponse{
+			Error:   false,
+			Message: fmt.Sprintf("Updated user with Id: %d", userInactive.ID),
+			Data:    userInactive,
+		}
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
