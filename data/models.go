@@ -42,6 +42,16 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// TokenDetails is the structure which holds data with JWT tokens
+type TokenDetails struct {
+	AccessToken  string
+	RefreshToken string
+	AccessUuid   string
+	RefreshUuid  string
+	AtExpires    int64
+	RtExpires    int64
+}
+
 // GetAll returns a slice of all users, sorted by last name
 func (u *User) GetAll() ([]*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)

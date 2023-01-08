@@ -42,15 +42,25 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 	}
 
-	token, err := app.createToken(user.ID)
+	ts, err := app.createToken(user.ID)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
+
+	}
+	saveErr := app.createAuth(user.ID, ts)
+	if saveErr != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+
+	}
+	tokens := map[string]string{
+		"access_token":  ts.AccessToken,
+		"refresh_token": ts.RefreshToken,
 	}
 
 	payload := jsonResponse{
 		Error:   false,
 		Message: fmt.Sprintf("Logged in user %s", requestPayload.Email),
-		Data:    token,
+		Data:    tokens,
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
