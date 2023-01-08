@@ -126,6 +126,13 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// validate user role
+	err = app.validateRole(requestPayload.Role)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
 	newUser := data.User{
 		Email:    email,
 		Password: requestPayload.Password,

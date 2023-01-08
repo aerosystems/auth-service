@@ -166,7 +166,7 @@ func (app *Config) normalizeEmail(data string) string {
 	username := arrAddr[0]
 	domain := arrAddr[1]
 
-	googleDomains := []string{"gmail.com", "googlemail.com"}
+	googleDomains := strings.Split(os.Getenv("GOOGLEMAIL_DOMAINS"), ",")
 
 	//checking google mail aliases
 	if Contains(googleDomains, domain) {
@@ -215,6 +215,14 @@ func (app *Config) validatePassword(password string) error {
 	}
 	if !done {
 		return errors.New("password should contain atleast one special character")
+	}
+	return nil
+}
+
+func (app *Config) validateRole(role string) error {
+	trustRoles := strings.Split(os.Getenv("TRUST_ROLES"), ",")
+	if !Contains(trustRoles, role) {
+		return errors.New("role exists in trusted roles")
 	}
 	return nil
 }
