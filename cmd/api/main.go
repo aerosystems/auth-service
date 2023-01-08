@@ -24,7 +24,6 @@ type Config struct {
 	DB     *sql.DB
 	Cache  *redis.Client
 	Models data.Models
-	//Etcd   *clientv3.Client
 }
 
 func main() {

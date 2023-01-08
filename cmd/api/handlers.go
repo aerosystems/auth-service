@@ -23,8 +23,25 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// validating email
+	addr, err := app.validateEmail(requestPayload.Email)
+	if err != nil {
+		err = errors.New("email is not valid")
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+	}
+
+	// nomalizing email
+	email := app.normalizeEmail(addr)
+
+	// validating password
+	err = app.validatePassword(requestPayload.Password)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
 	// validate against database
-	user, err := app.Models.User.GetByEmail(requestPayload.Email)
+	user, err := app.Models.User.GetByEmail(email)
 	if err != nil {
 		_ = app.errorJSON(w, errors.New("invalid credentials"), http.StatusUnauthorized)
 		return
@@ -36,22 +53,25 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// create pair of JWT tokens
+	ts, err := app.createToken(user.ID)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+
+	}
+
+	err = app.createAuth(user.ID, ts)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+
+	}
+
 	// log request
 	err = app.logRequest("authentication", fmt.Sprintf("%s logged in", user.Email))
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 	}
 
-	ts, err := app.createToken(user.ID)
-	if err != nil {
-		_ = app.errorJSON(w, err, http.StatusBadRequest)
-
-	}
-	saveErr := app.createAuth(user.ID, ts)
-	if saveErr != nil {
-		_ = app.errorJSON(w, err, http.StatusBadRequest)
-
-	}
 	tokens := map[string]string{
 		"access_token":  ts.AccessToken,
 		"refresh_token": ts.RefreshToken,
@@ -70,6 +90,7 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
+		Role     string `json:"role"`
 	}
 
 	err := app.readJSON(w, r, &requestPayload)
@@ -78,11 +99,38 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	addr, err := app.validateEmail(requestPayload.Email)
+	if err != nil {
+		err = errors.New("email is not valid")
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+	}
+
+	email := app.normalizeEmail(addr)
+
+	//checking if email is existing
+	user, _ := app.Models.User.GetByEmail(email)
+	if user != nil {
+		err = errors.New("email already exists")
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// Minimum of one small case letter
+	// Minimum of one upper case letter
+	// Minimum of one digit
+	// Minimum of one special character
+	// Minimum 8 characters length
+	err = app.validatePassword(requestPayload.Password)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
 	newUser := data.User{
-		Email:    requestPayload.Email,
+		Email:    email,
 		Password: requestPayload.Password,
-		Active:   1,
-		Role:     "startup",
+		Active:   false,
+		Role:     requestPayload.Role,
 	}
 
 	// validate against database
@@ -115,6 +163,9 @@ func (app *Config) logRequest(name, data string) error {
 	logServiceURL := "http://log-service/api/log"
 
 	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
 	request.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}

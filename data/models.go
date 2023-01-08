@@ -36,20 +36,10 @@ type User struct {
 	ID        int       `json:"id"`
 	Email     string    `json:"email"`
 	Password  string    `json:"-"`
-	Active    int       `json:"active"`
+	Active    bool      `json:"active"`
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// TokenDetails is the structure which holds data with JWT tokens
-type TokenDetails struct {
-	AccessToken  string
-	RefreshToken string
-	AccessUuid   string
-	RefreshUuid  string
-	AtExpires    int64
-	RtExpires    int64
 }
 
 // GetAll returns a slice of all users, sorted by last name
@@ -57,7 +47,7 @@ func (u *User) GetAll() ([]*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, password, user_active, role, created_at, updated_at
+	query := `select id, email, password, is_active, role, created_at, updated_at
 	from users order by last_name`
 
 	rows, err := db.QueryContext(ctx, query)
@@ -95,7 +85,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, password, user_active, role, created_at, updated_at from users where email = $1`
+	query := `select id, email, password, is_active, role, created_at, updated_at from users where email = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, email)
@@ -122,7 +112,7 @@ func (u *User) GetOne(id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email,password, user_active, role, created_at, updated_at from users where id = $1`
+	query := `select id, email,password, is_active, role, created_at, updated_at from users where id = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, id)
@@ -152,7 +142,7 @@ func (u *User) Update() error {
 
 	stmt := `update users set
 		email = $1,
-		user_active = $2,
+		is_active = $2,
 		role = $3,
 		updated_at = $4,
 		where id = $5
@@ -214,7 +204,7 @@ func (u *User) Insert(user User) (int, error) {
 	}
 
 	var newID int
-	stmt := `insert into users (email, password, user_active, role, created_at, updated_at)
+	stmt := `insert into users (email, password, is_active, role, created_at, updated_at)
 		values ($1, $2, $3, $4, $5, $6) returning id`
 
 	err = db.QueryRowContext(ctx, stmt,
