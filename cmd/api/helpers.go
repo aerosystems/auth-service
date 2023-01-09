@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/twinj/uuid"
+	"github.com/google/uuid"
 )
 
 // jsonResponse is the type used for sending JSON around
@@ -27,8 +27,8 @@ type jsonResponse struct {
 type tokenDetails struct {
 	AccessToken  string
 	RefreshToken string
-	AccessUuid   string
-	RefreshUuid  string
+	AccessUuid   uuid.UUID
+	RefreshUuid  uuid.UUID
 	AtExpires    int64
 	RtExpires    int64
 }
@@ -48,13 +48,13 @@ func (app *Config) createToken(userid int) (*tokenDetails, error) {
 	}
 
 	td.AtExpires = time.Now().Add(time.Minute * time.Duration(access_exp_minutes)).Unix()
-	td.AccessUuid = uuid.NewV4().String()
+	td.AccessUuid = uuid.New()
 
 	td.RtExpires = time.Now().Add(time.Minute * time.Duration(refresh_exp_minutes)).Unix()
-	td.RefreshUuid = uuid.NewV4().String()
+	td.RefreshUuid = uuid.New()
 
 	atClaims := jwt.MapClaims{}
-	atClaims["access_uuid"] = td.AccessUuid
+	atClaims["access_uuid"] = td.AccessUuid.String()
 	atClaims["user_id"] = userid
 	atClaims["exp"] = td.AtExpires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
@@ -81,11 +81,11 @@ func (app *Config) createAuth(userid int, td *tokenDetails) error {
 	rt := time.Unix(td.RtExpires, 0) //converting Unix to UTC(to Time object)
 	now := time.Now()
 
-	errAccess := app.Cache.Set(td.AccessUuid, strconv.Itoa(int(userid)), at.Sub(now)).Err()
+	errAccess := app.Cache.Set(td.AccessUuid.String(), strconv.Itoa(int(userid)), at.Sub(now)).Err()
 	if errAccess != nil {
 		return errAccess
 	}
-	errRefresh := app.Cache.Set(td.RefreshUuid, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
+	errRefresh := app.Cache.Set(td.RefreshUuid.String(), strconv.Itoa(int(userid)), rt.Sub(now)).Err()
 	if errRefresh != nil {
 		return errRefresh
 	}
