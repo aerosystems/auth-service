@@ -15,8 +15,8 @@ func New(dbPool *sql.DB) Models {
 	db = dbPool
 
 	return Models{
-		User:         User{},
-		UserInactive: UserInactive{},
+		User: User{},
+		Code: Code{},
 	}
 }
 
@@ -24,27 +24,25 @@ func New(dbPool *sql.DB) Models {
 // in this type is available to us throughout the application, anywhere that the
 // app variable is used, provided that the model is also added in the New function.
 type Models struct {
-	User         User
-	UserInactive UserInactive
+	User User
+	Code Code
 }
 
 // User is the structure which holds one user from the database.
 type User struct {
-	ID        int       `json:"id"`
-	Email     string    `json:"email"`
-	Password  string    `json:"-"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Active    bool      `json:"active"`
+	ID       int       `json:"id"`
+	Email    string    `json:"email"`
+	Password string    `json:"-"`
+	Role     string    `json:"role"`
+	Created  time.Time `json:"created"`
+	Updated  time.Time `json:"updated"`
+	Active   bool      `json:"active"`
 }
 
-// User is the structure which holds one user from the database.
-type UserInactive struct {
-	ID        int       `json:"id"`
-	Email     string    `json:"email"`
-	Password  string    `json:"-"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+type Code struct {
+	ID         int       `json:"id"`
+	Code       int       `json:"code"`
+	UserID     int       `json:"user_id"`
+	Created    time.Time `json:"created"`
+	Expiration time.Time `json:"expiration"`
 }

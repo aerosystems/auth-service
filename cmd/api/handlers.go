@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/aerosystems/auth-service/data"
 )
@@ -128,7 +129,11 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 	var payload jsonResponse
 
 	//checking if email is existing
-	user, _ := app.Models.User.GetByEmail(email)
+	user, err := app.Models.User.GetByEmail(email)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
 	if user != nil {
 		if user.Active {
 			err = errors.New("email already exists")
@@ -148,11 +153,19 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 				_ = app.errorJSON(w, err, http.StatusBadRequest)
 				return
 			}
+			// generating confirmation code
+			code, err := app.Models.Code.CreateCode(user.ID)
+			if err != nil {
+				_ = app.errorJSON(w, err, http.StatusBadRequest)
+				return
+			}
+
 			payload = jsonResponse{
 				Error:   false,
-				Message: fmt.Sprintf("Updated user with Id: %d", user.ID),
+				Message: fmt.Sprintf("Updated user with Id: %d. Confirmation code: %d", user.ID, code),
 				Data:    user,
 			}
+			_ = app.writeJSON(w, http.StatusAccepted, payload)
 		}
 	}
 
@@ -167,9 +180,15 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
 	}
+	// generating confirmation code
+	code, err := app.Models.Code.CreateCode(user.ID)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
 	payload = jsonResponse{
 		Error:   false,
-		Message: fmt.Sprintf("Registered user with Id: %d", newUserId),
+		Message: fmt.Sprintf("Registered user with Id: %d. Confirmation code: %d", newUserId, code),
 		Data:    newUser,
 	}
 
@@ -188,10 +207,28 @@ func (app *Config) Confirmation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	code, err := app.Models.Code.GetByCode(requestPayload.Code)
+	if err != nil {
+		_ = app.errorJSON(w, errors.New("code is not found"), http.StatusNotFound)
+		return
+	}
+	if code.Expiration.Before(time.Now()) {
+		_ = app.errorJSON(w, errors.New("code is expired"), http.StatusNotFound)
+		return
+	}
+
+	user, err := app.Models.User.GetOne(code.UserID)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+	user.Active = true
+	user.Update()
+
 	payload := jsonResponse{
-		Error: false,
-		// Message: fmt.Sprintf("Succesfuly confirmed registration user with Id: %d", user.ID),
-		// Data:    user,
+		Error:   false,
+		Message: fmt.Sprintf("Succesfuly confirmed registration user with Id: %d", user.ID),
+		Data:    user,
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)

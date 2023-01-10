@@ -37,20 +37,20 @@ type tokenDetails struct {
 func (app *Config) createToken(userid int) (*tokenDetails, error) {
 	td := &tokenDetails{}
 
-	access_exp_minutes, err := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))
+	accessExpMinutes, err := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))
 	if err != nil {
 		return nil, err
 	}
 
-	refresh_exp_minutes, err := strconv.Atoi(os.Getenv("REFRESH_EXP_MINUTES"))
+	refreshExpMinutes, err := strconv.Atoi(os.Getenv("REFRESH_EXP_MINUTES"))
 	if err != nil {
 		return nil, err
 	}
 
-	td.AtExpires = time.Now().Add(time.Minute * time.Duration(access_exp_minutes)).Unix()
+	td.AtExpires = time.Now().Add(time.Minute * time.Duration(accessExpMinutes)).Unix()
 	td.AccessUuid = uuid.New()
 
-	td.RtExpires = time.Now().Add(time.Minute * time.Duration(refresh_exp_minutes)).Unix()
+	td.RtExpires = time.Now().Add(time.Minute * time.Duration(refreshExpMinutes)).Unix()
 	td.RefreshUuid = uuid.New()
 
 	atClaims := jwt.MapClaims{}
