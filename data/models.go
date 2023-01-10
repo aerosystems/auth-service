@@ -36,6 +36,7 @@ type User struct {
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	Active    bool      `json:"active"`
 }
 
 // User is the structure which holds one user from the database.

@@ -14,7 +14,7 @@ func (u *User) GetAll() ([]*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, password, role, created_at, updated_at
+	query := `select id, email, password, role, created_at, updated_at, active
 	from users order by last_name`
 
 	rows, err := db.QueryContext(ctx, query)
@@ -34,6 +34,7 @@ func (u *User) GetAll() ([]*User, error) {
 			&user.Role,
 			&user.CreatedAt,
 			&user.UpdatedAt,
+			&user.Active,
 		)
 		if err != nil {
 			log.Println("Error scanning", err)
@@ -51,7 +52,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, password, role, created_at, updated_at from users where email = $1`
+	query := `select id, email, password, role, created_at, updated_at, active from users where email = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, email)
@@ -63,6 +64,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user, u.Active,
 	)
 
 	if err != nil {
@@ -77,7 +79,7 @@ func (u *User) GetOne(id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email,password, role, created_at, updated_at from users where id = $1`
+	query := `select id, email, password, role, created_at, updated_at, active from users where id = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, id)
@@ -89,6 +91,7 @@ func (u *User) GetOne(id int) (*User, error) {
 		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.Active,
 	)
 
 	if err != nil {
@@ -108,6 +111,7 @@ func (u *User) Update() error {
 		email = $1,
 		role = $2,
 		updated_at = $3,
+		active = $4
 		where id = $4
 	`
 
@@ -115,6 +119,7 @@ func (u *User) Update() error {
 		u.Email,
 		u.Role,
 		time.Now(),
+		u.Active,
 		u.ID,
 	)
 
@@ -166,8 +171,8 @@ func (u *User) Insert(user User) (int, error) {
 	}
 
 	var newID int
-	stmt := `insert into users (email, password, role, created_at, updated_at)
-		values ($1, $2, $3, $4, $5) returning id`
+	stmt := `insert into users (email, password, role, created_at, updated_at, active)
+		values ($1, $2, $3, $4, $5, $6) returning id`
 
 	err = db.QueryRowContext(ctx, stmt,
 		user.Email,
@@ -175,6 +180,7 @@ func (u *User) Insert(user User) (int, error) {
 		user.Role,
 		time.Now(),
 		time.Now(),
+		user.Active,
 	).Scan(&newID)
 
 	if err != nil {
