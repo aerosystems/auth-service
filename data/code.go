@@ -33,6 +33,60 @@ func (c *Code) GetByCode(XXXXXX int) (*Code, error) {
 	return &code, nil
 }
 
+func (c *Code) GetLastActiveCode(userID int) (*Code, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `SELECT id, code, user_id, created, expiration 
+				FROM codes
+				WHERE user_id = $1
+				AND expiration > NOW()
+				ORDER BY created DESC
+				LIMIT 11`
+
+	var code Code
+	row := db.QueryRowContext(ctx, query, userID)
+
+	err := row.Scan(
+		&code.ID,
+		&code.Code,
+		&code.UserID,
+		&code.Created,
+		&code.Expiration,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &code, nil
+}
+
+func (c *Code) ExtendExpiration() error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	codeExpMinutes, err := strconv.Atoi(os.Getenv("CODE_EXP_MINUTES"))
+	if err != nil {
+		return err
+	}
+
+	stmt := `UPDATE codes
+				SET expiration = $1
+				WHERE id = $2`
+
+	_, err = db.ExecContext(ctx, stmt,
+		codeExpMinutes,
+		c.ID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Insert inserts a new code into the database, and returns the ID of the newly inserted row
 func (c *Code) Insert() (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)

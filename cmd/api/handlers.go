@@ -151,16 +151,26 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 				_ = app.errorJSON(w, err, http.StatusBadRequest)
 				return
 			}
-			// generating confirmation code
-			code, err := app.Models.Code.CreateCode(user.ID)
-			if err != nil {
-				_ = app.errorJSON(w, err, http.StatusBadRequest)
-				return
+
+			code, _ := app.Models.Code.GetLastActiveCode(user.ID)
+			var XXXXXX int
+
+			if code == nil {
+				// generating confirmation code
+				XXXXXX, err = app.Models.Code.CreateCode(user.ID)
+				if err != nil {
+					_ = app.errorJSON(w, err, http.StatusBadRequest)
+					return
+				}
+			} else {
+				// extend expiration code and return previous active code
+				code.ExtendExpiration()
+				XXXXXX = code.Code
 			}
 
 			payload = jsonResponse{
 				Error:   false,
-				Message: fmt.Sprintf("Updated user with Id: %d. Confirmation code: %d", user.ID, code),
+				Message: fmt.Sprintf("Updated user with Id: %d. Confirmation code: %d", user.ID, XXXXXX),
 				Data:    user,
 			}
 			_ = app.writeJSON(w, http.StatusAccepted, payload)
@@ -181,14 +191,14 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 	}
 	newUser.ID = newUserId
 	// generating confirmation code
-	code, err := app.Models.Code.CreateCode(newUserId)
+	XXXXXX, err := app.Models.Code.CreateCode(newUserId)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 	payload = jsonResponse{
 		Error:   false,
-		Message: fmt.Sprintf("Registered user with Id: %d. Confirmation code: %d", newUserId, code),
+		Message: fmt.Sprintf("Registered user with Id: %d. Confirmation code: %d", newUserId, XXXXXX),
 		Data:    newUser,
 	}
 
