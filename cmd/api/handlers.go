@@ -58,19 +58,20 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 	ts, err := app.createToken(user.ID)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
-
+		return
 	}
 
 	err = app.createAuth(user.ID, ts)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
-
+		return
 	}
 
 	// log request
 	err = app.logRequest("authentication", fmt.Sprintf("%s logged in", user.Email))
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
 	}
 
 	tokens := map[string]string{
@@ -104,6 +105,7 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = errors.New("email is not valid")
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
 	}
 
 	email := app.normalizeEmail(addr)
@@ -129,11 +131,7 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 	var payload jsonResponse
 
 	//checking if email is existing
-	user, err := app.Models.User.GetByEmail(email)
-	if err != nil {
-		_ = app.errorJSON(w, err, http.StatusBadRequest)
-		return
-	}
+	user, _ := app.Models.User.GetByEmail(email)
 	if user != nil {
 		if user.Active {
 			err = errors.New("email already exists")
@@ -166,6 +164,7 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 				Data:    user,
 			}
 			_ = app.writeJSON(w, http.StatusAccepted, payload)
+			return
 		}
 	}
 
@@ -180,8 +179,9 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
 	}
+	newUser.ID = newUserId
 	// generating confirmation code
-	code, err := app.Models.Code.CreateCode(user.ID)
+	code, err := app.Models.Code.CreateCode(newUserId)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
@@ -193,7 +193,6 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
-
 }
 
 func (app *Config) Confirmation(w http.ResponseWriter, r *http.Request) {
@@ -202,6 +201,12 @@ func (app *Config) Confirmation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = app.validateCode(requestPayload.Code)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
