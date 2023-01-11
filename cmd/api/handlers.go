@@ -61,6 +61,7 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// add refresh token UUID to cache
 	err = app.createAuth(user.ID, ts)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
@@ -248,6 +249,59 @@ func (app *Config) Confirmation(w http.ResponseWriter, r *http.Request) {
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
 
+}
+
+func (app *Config) Refresh(w http.ResponseWriter, r *http.Request) {
+	var requestPayload struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// validate & parse refresh token claims
+	refreshTokenClaims, err := app.decodeRefreshToken(requestPayload.RefreshToken)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// drop refresh token UUID from cache
+	err = app.dropCache(refreshTokenClaims.RefreshUUID)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// create pair of JWT tokens
+	ts, err := app.createToken(refreshTokenClaims.UserID)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// add refresh token UUID to cache
+	err = app.createAuth(refreshTokenClaims.UserID, ts)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	tokens := map[string]string{
+		"access_token":  ts.AccessToken,
+		"refresh_token": ts.RefreshToken,
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: fmt.Sprintf("Logged in user %d", refreshTokenClaims.UserID),
+		Data:    tokens,
+	}
+
+	_ = app.writeJSON(w, http.StatusAccepted, payload)
 }
 
 func (app *Config) logRequest(name, data string) error {

@@ -33,6 +33,20 @@ type tokenDetails struct {
 	RtExpires    int64
 }
 
+type accessTokenClaims struct {
+	AccessUUID string `json:"access_uuid"`
+	UserID     int    `json:"user_id"`
+	Exp        int    `json:"exp"`
+	jwt.StandardClaims
+}
+
+type refreshTokenClaims struct {
+	RefreshUUID string `json:"refresh_uuid"`
+	UserID      int    `json:"user_id"`
+	Exp         int    `json:"exp"`
+	jwt.StandardClaims
+}
+
 // createToken returns JWT Token
 func (app *Config) createToken(userid int) (*tokenDetails, error) {
 	td := &tokenDetails{}
@@ -73,6 +87,38 @@ func (app *Config) createToken(userid int) (*tokenDetails, error) {
 		return nil, err
 	}
 	return td, nil
+}
+
+func (app *Config) decodeRefreshToken(tokenString string) (*refreshTokenClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &refreshTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("REFRESH_SECRET")), nil
+	})
+
+	if claims, ok := token.Claims.(*refreshTokenClaims); ok && token.Valid {
+		return claims, nil
+	} else {
+		return nil, err
+	}
+}
+
+func (app *Config) decodeAccessToken(tokenString string) (*accessTokenClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &accessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("ACCESS_SECRET")), nil
+	})
+
+	if claims, ok := token.Claims.(*accessTokenClaims); ok && token.Valid {
+		return claims, nil
+	} else {
+		return nil, err
+	}
+}
+
+func (app *Config) dropCache(UUID string) error {
+	err := app.Cache.Del(UUID).Err()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // createAuth: function that will be used to save the JWTs metadata
