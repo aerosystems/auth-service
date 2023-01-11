@@ -14,8 +14,9 @@ func (u *User) GetAll() ([]*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, password, role, created, updated, active
-	from users order by last_name`
+	query := `SELECT id, email, password, role, created, updated, active
+				FROM users
+				ORDER BY last_name`
 
 	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
@@ -52,7 +53,9 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, password, role, created, updated, active from users where email = $1`
+	query := `SELECT id, email, password, role, created, updated, active
+				FROM users
+				WHERE email = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, email)
@@ -79,7 +82,9 @@ func (u *User) GetOne(id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, password, role, created, updated, active from users where id = $1`
+	query := `SELECT id, email, password, role, created, updated, active
+				FROM users
+				WHERE id = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, id)
@@ -107,12 +112,12 @@ func (u *User) Update() error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	stmt := `update users set
+	stmt := `UPDATE users SET
 		email = $1,
 		role = $2,
 		updated = $3,
 		active = $4
-		where id = $5
+		WHERE id = $5
 	`
 
 	_, err := db.ExecContext(ctx, stmt,
@@ -135,7 +140,8 @@ func (u *User) Delete() error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	stmt := `delete from users where id = $1`
+	stmt := `DELETE FROM users
+				WHERE id = $1`
 
 	_, err := db.ExecContext(ctx, stmt, u.ID)
 	if err != nil {
@@ -150,7 +156,8 @@ func (u *User) DeleteByID(id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	stmt := `delete from users where id = $1`
+	stmt := `DELETE FROM users
+				WHERE id = $1`
 
 	_, err := db.ExecContext(ctx, stmt, id)
 	if err != nil {
@@ -171,8 +178,8 @@ func (u *User) Insert(user User) (int, error) {
 	}
 
 	var newID int
-	stmt := `insert into users (email, password, role, created, updated, active)
-		values ($1, $2, $3, $4, $5, $6) returning id`
+	stmt := `INSERT INTO users (email, password, role, created, updated, active)
+				VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 
 	err = db.QueryRowContext(ctx, stmt,
 		user.Email,
@@ -200,7 +207,9 @@ func (u *User) ResetPassword(password string) error {
 		return err
 	}
 
-	stmt := `update users set password = $1 where id = $2`
+	stmt := `UPDATE users
+				SET password = $1
+				WHERE id = $2`
 	_, err = db.ExecContext(ctx, stmt, hashedPassword, u.ID)
 	if err != nil {
 		return err

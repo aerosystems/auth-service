@@ -13,7 +13,9 @@ func (c *Code) GetByCode(XXXXXX int) (*Code, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, code, user_id, created, expiration from codes where code = $1`
+	query := `SELECT id, code, user_id, created, expiration
+				FROM codes
+				WHERE code = $1`
 
 	var code Code
 	row := db.QueryRowContext(ctx, query, XXXXXX)
@@ -93,8 +95,8 @@ func (c *Code) Insert() (int, error) {
 	defer cancel()
 
 	var newID int
-	stmt := `insert into codes (code, user_id, created, expiration)
-		values ($1, $2, $3, $4) returning id`
+	stmt := `INSERT INTO codes (code, user_id, created, expiration)
+			VALUES ($1, $2, $3, $4) RETURNING id`
 
 	err := db.QueryRowContext(ctx, stmt,
 		&c.Code,
