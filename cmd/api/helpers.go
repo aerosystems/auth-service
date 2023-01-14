@@ -113,7 +113,7 @@ func (app *Config) decodeAccessToken(tokenString string) (*accessTokenClaims, er
 	}
 }
 
-func (app *Config) dropCache(UUID string) error {
+func (app *Config) dropAuth(UUID string) error {
 	err := app.Cache.Del(UUID).Err()
 	if err != nil {
 		return err
@@ -286,6 +286,36 @@ func (app *Config) validateCode(code int) error {
 		return errors.New("code must contain 6 digits")
 	}
 	return nil
+}
+
+func (app *Config) GetAccessTokenFromHeader(r *http.Request) (*string, error) {
+	headers := r.Header
+	_, ok := headers["Authorization"]
+	if !ok {
+		return nil, errors.New("request must contain Authorization Header")
+	}
+
+	rawData := strings.Split(r.Header.Get("Authorization"), "Bearer ")
+	if len(rawData) != 2 {
+		return nil, errors.New("authorization Header must contain Bearer format token")
+	}
+	accessToken := rawData[1]
+	return &accessToken, nil
+
+}
+
+func (app *Config) GetUserIDByUUID(UUID string) (*int, error) {
+	stringUserID, err := app.Cache.Get(UUID).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	UserID, err := strconv.Atoi(stringUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserID, nil
 }
 
 func Contains(a []string, x string) bool {

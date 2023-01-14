@@ -265,12 +265,12 @@ func (app *Config) Refresh(w http.ResponseWriter, r *http.Request) {
 	// validate & parse refresh token claims
 	refreshTokenClaims, err := app.decodeRefreshToken(requestPayload.RefreshToken)
 	if err != nil {
-		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		_ = app.errorJSON(w, err, http.StatusUnauthorized)
 		return
 	}
 
 	// drop refresh token UUID from cache
-	err = app.dropCache(refreshTokenClaims.RefreshUUID)
+	err = app.dropAuth(refreshTokenClaims.RefreshUUID)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
@@ -302,6 +302,41 @@ func (app *Config) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
+	accessToken, err := app.GetAccessTokenFromHeader(r)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusUnauthorized)
+		return
+	}
+
+	tokenClaims, err := app.decodeAccessToken(*accessToken)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := app.GetUserIDByUUID(tokenClaims.AccessUUID)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusUnauthorized)
+		return
+	}
+
+	err = app.dropAuth(tokenClaims.AccessUUID)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusUnauthorized)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: fmt.Sprintf("User %d successfully logged out", *userID),
+		Data:    *userID,
+	}
+
+	_ = app.writeJSON(w, http.StatusAccepted, payload)
+
 }
 
 func (app *Config) logRequest(name, data string) error {
