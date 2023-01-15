@@ -49,9 +49,6 @@ func main() {
 		Models: data.New(connDB),
 	}
 
-	//app.registerService()
-	//defer app.Etcd.Close()
-
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
 		Handler: app.routes(),

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/mail"
@@ -24,7 +25,7 @@ type jsonResponse struct {
 }
 
 // TokenDetails is the structure which holds data with JWT tokens
-type tokenDetails struct {
+type TokenDetails struct {
 	AccessToken  string
 	RefreshToken string
 	AccessUuid   uuid.UUID
@@ -33,23 +34,28 @@ type tokenDetails struct {
 	RtExpires    int64
 }
 
-type accessTokenClaims struct {
+type AccessTokenClaims struct {
 	AccessUUID string `json:"access_uuid"`
 	UserID     int    `json:"user_id"`
 	Exp        int    `json:"exp"`
 	jwt.StandardClaims
 }
 
-type refreshTokenClaims struct {
+type RefreshTokenClaims struct {
 	RefreshUUID string `json:"refresh_uuid"`
 	UserID      int    `json:"user_id"`
 	Exp         int    `json:"exp"`
 	jwt.StandardClaims
 }
 
+type AccessTokenCache struct {
+	UserID      int    `json:"user_id"`
+	RefreshUUID string `json:"refresh_uuid"`
+}
+
 // createToken returns JWT Token
-func (app *Config) createToken(userid int) (*tokenDetails, error) {
-	td := &tokenDetails{}
+func (app *Config) createToken(userid int) (*TokenDetails, error) {
+	td := &TokenDetails{}
 
 	accessExpMinutes, err := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))
 	if err != nil {
@@ -89,31 +95,53 @@ func (app *Config) createToken(userid int) (*tokenDetails, error) {
 	return td, nil
 }
 
-func (app *Config) decodeRefreshToken(tokenString string) (*refreshTokenClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &refreshTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (app *Config) decodeRefreshToken(tokenString string) (*RefreshTokenClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &RefreshTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("REFRESH_SECRET")), nil
 	})
 
-	if claims, ok := token.Claims.(*refreshTokenClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*RefreshTokenClaims); ok && token.Valid {
 		return claims, nil
 	} else {
 		return nil, err
 	}
 }
 
-func (app *Config) decodeAccessToken(tokenString string) (*accessTokenClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &accessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (app *Config) decodeAccessToken(tokenString string) (*AccessTokenClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("ACCESS_SECRET")), nil
 	})
 
-	if claims, ok := token.Claims.(*accessTokenClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*AccessTokenClaims); ok && token.Valid {
 		return claims, nil
 	} else {
 		return nil, err
 	}
 }
 
-func (app *Config) dropAuth(UUID string) error {
+func (app *Config) dropCacheTokens(accessTokenClaims AccessTokenClaims) error {
+	cacheJSON, _ := app.GetCacheValue(accessTokenClaims.AccessUUID)
+	accessTokenCache := new(AccessTokenCache)
+	err := json.Unmarshal([]byte(*cacheJSON), accessTokenCache)
+	if err != nil {
+		return err
+	}
+	// drop refresh token from Redis cache
+	err = app.dropCacheKey(accessTokenCache.RefreshUUID)
+	if err != nil {
+		return err
+	}
+	// drop access token from Redis cache
+	err = app.dropCacheKey(accessTokenClaims.AccessUUID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// dropCacheKey: function that will be used to drop the JWTs metadata from Redis
+func (app *Config) dropCacheKey(UUID string) error {
 	err := app.Cache.Del(UUID).Err()
 	if err != nil {
 		return err
@@ -121,19 +149,27 @@ func (app *Config) dropAuth(UUID string) error {
 	return nil
 }
 
-// createAuth: function that will be used to save the JWTs metadata
-func (app *Config) createAuth(userid int, td *tokenDetails) error {
+// createCacheKey: function that will be used to save the JWTs metadata in Redis
+func (app *Config) createCacheKey(userID int, td *TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
 	rt := time.Unix(td.RtExpires, 0) //converting Unix to UTC(to Time object)
 	now := time.Now()
 
-	errAccess := app.Cache.Set(td.AccessUuid.String(), strconv.Itoa(int(userid)), at.Sub(now)).Err()
-	if errAccess != nil {
-		return errAccess
+	cacheJSON, err := json.Marshal(AccessTokenCache{
+		UserID:      userID,
+		RefreshUUID: td.RefreshUuid.String(),
+	})
+	if err != nil {
+		return err
 	}
-	errRefresh := app.Cache.Set(td.RefreshUuid.String(), strconv.Itoa(int(userid)), rt.Sub(now)).Err()
-	if errRefresh != nil {
-		return errRefresh
+
+	err = app.Cache.Set(td.AccessUuid.String(), cacheJSON, at.Sub(now)).Err()
+	if err != nil {
+		return err
+	}
+	err = app.Cache.Set(td.RefreshUuid.String(), strconv.Itoa(userID), rt.Sub(now)).Err()
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -288,6 +324,20 @@ func (app *Config) validateCode(code int) error {
 	return nil
 }
 
+func (app *Config) VerifyToken(tokenString string) (*jwt.Token, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		//Make sure that the token method conform to "SigningMethodHMAC"
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("ACCESS_SECRET")), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
+}
+
 func (app *Config) GetAccessTokenFromHeader(r *http.Request) (*string, error) {
 	headers := r.Header
 	_, ok := headers["Authorization"]
@@ -304,18 +354,12 @@ func (app *Config) GetAccessTokenFromHeader(r *http.Request) (*string, error) {
 
 }
 
-func (app *Config) GetUserIDByUUID(UUID string) (*int, error) {
-	stringUserID, err := app.Cache.Get(UUID).Result()
+func (app *Config) GetCacheValue(UUID string) (*string, error) {
+	value, err := app.Cache.Get(UUID).Result()
 	if err != nil {
 		return nil, err
 	}
-
-	UserID, err := strconv.Atoi(stringUserID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &UserID, nil
+	return &value, nil
 }
 
 func Contains(a []string, x string) bool {

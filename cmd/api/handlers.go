@@ -62,7 +62,7 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add refresh token UUID to cache
-	err = app.createAuth(user.ID, ts)
+	err = app.createCacheKey(user.ID, ts)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
@@ -252,11 +252,28 @@ func (app *Config) Confirmation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) Refresh(w http.ResponseWriter, r *http.Request) {
+	// recieve AccessToken Claims from context middleware
+	accessTokenClaims, ok := r.Context().Value(contextKey("accessTokenClaims")).(*AccessTokenClaims)
+	if !ok {
+		_ = app.errorJSON(w, errors.New("token is untracked"), http.StatusUnauthorized)
+		return
+	}
+
+	// getting Refresh Token from Redis cache
+	cacheJSON, _ := app.GetCacheValue(accessTokenClaims.AccessUUID)
+	accessTokenCache := new(AccessTokenCache)
+	err := json.Unmarshal([]byte(*cacheJSON), accessTokenCache)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+	cacheRefreshTokenUUID := accessTokenCache.RefreshUUID
+
 	var requestPayload struct {
 		RefreshToken string `json:"refresh_token"`
 	}
 
-	err := app.readJSON(w, r, &requestPayload)
+	err = app.readJSON(w, r, &requestPayload)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
@@ -268,11 +285,16 @@ func (app *Config) Refresh(w http.ResponseWriter, r *http.Request) {
 		_ = app.errorJSON(w, err, http.StatusUnauthorized)
 		return
 	}
+	requestRefreshTokenUUID := refreshTokenClaims.RefreshUUID
 
-	// drop refresh token UUID from cache
-	err = app.dropAuth(refreshTokenClaims.RefreshUUID)
-	if err != nil {
-		_ = app.errorJSON(w, err, http.StatusBadRequest)
+	// drop Access & Refresh Tokens from Redis Cache
+	_ = app.dropCacheTokens(*accessTokenClaims)
+
+	// compare RefreshToken UUID from Redis cache & Request body
+	if requestRefreshTokenUUID != cacheRefreshTokenUUID {
+		// drop request RefreshToken UUID from cache
+		_ = app.dropCacheKey(requestRefreshTokenUUID)
+		_ = app.errorJSON(w, errors.New("hmmm... refresh token in request body does not match refresh token which publish access token. is it scam?"))
 		return
 	}
 
@@ -284,7 +306,7 @@ func (app *Config) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add refresh token UUID to cache
-	err = app.createAuth(refreshTokenClaims.UserID, ts)
+	err = app.createCacheKey(refreshTokenClaims.UserID, ts)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
@@ -305,25 +327,14 @@ func (app *Config) Refresh(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
-	accessToken, err := app.GetAccessTokenFromHeader(r)
-	if err != nil {
-		_ = app.errorJSON(w, err, http.StatusUnauthorized)
+
+	accessTokenClaims, ok := r.Context().Value(contextKey("accessTokenClaims")).(*AccessTokenClaims)
+	if !ok {
+		_ = app.errorJSON(w, errors.New("token is untracked"), http.StatusUnauthorized)
 		return
 	}
 
-	tokenClaims, err := app.decodeAccessToken(*accessToken)
-	if err != nil {
-		_ = app.errorJSON(w, err, http.StatusUnauthorized)
-		return
-	}
-
-	userID, err := app.GetUserIDByUUID(tokenClaims.AccessUUID)
-	if err != nil {
-		_ = app.errorJSON(w, err, http.StatusUnauthorized)
-		return
-	}
-
-	err = app.dropAuth(tokenClaims.AccessUUID)
+	err := app.dropCacheTokens(*accessTokenClaims)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusUnauthorized)
 		return
@@ -331,12 +342,11 @@ func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
 
 	payload := jsonResponse{
 		Error:   false,
-		Message: fmt.Sprintf("User %d successfully logged out", *userID),
-		Data:    *userID,
+		Message: fmt.Sprintf("User %s successfully logged out", accessTokenClaims.AccessUUID),
+		Data:    accessTokenClaims,
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
-
 }
 
 func (app *Config) logRequest(name, data string) error {
