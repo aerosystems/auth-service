@@ -13,7 +13,7 @@ func (c *Code) GetByCode(XXXXXX int) (*Code, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `SELECT id, code, user_id, created, expiration
+	query := `SELECT id, code, user_id, created, expiration, action, data
 				FROM codes
 				WHERE code = $1`
 
@@ -26,6 +26,8 @@ func (c *Code) GetByCode(XXXXXX int) (*Code, error) {
 		&code.UserID,
 		&code.Created,
 		&code.Expiration,
+		&code.Action,
+		&code.Data,
 	)
 
 	if err != nil {
@@ -35,19 +37,20 @@ func (c *Code) GetByCode(XXXXXX int) (*Code, error) {
 	return &code, nil
 }
 
-func (c *Code) GetLastActiveCode(userID int) (*Code, error) {
+func (c *Code) GetLastActiveCode(userID int, action string) (*Code, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `SELECT id, code, user_id, created, expiration 
+	query := `SELECT id, code, user_id, created, expiration, action, data 
 				FROM codes
 				WHERE user_id = $1
+				AND action = $2
 				AND expiration > NOW()
 				ORDER BY created DESC
 				LIMIT 11`
 
 	var code Code
-	row := db.QueryRowContext(ctx, query, userID)
+	row := db.QueryRowContext(ctx, query, userID, action)
 
 	err := row.Scan(
 		&code.ID,
@@ -55,6 +58,8 @@ func (c *Code) GetLastActiveCode(userID int) (*Code, error) {
 		&code.UserID,
 		&code.Created,
 		&code.Expiration,
+		&code.Action,
+		&code.Data,
 	)
 
 	if err != nil {
@@ -95,14 +100,16 @@ func (c *Code) Insert() (int, error) {
 	defer cancel()
 
 	var newID int
-	stmt := `INSERT INTO codes (code, user_id, created, expiration)
-			VALUES ($1, $2, $3, $4) RETURNING id`
+	stmt := `INSERT INTO codes (code, user_id, created, expiration, action, data)
+			VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 
 	err := db.QueryRowContext(ctx, stmt,
 		&c.Code,
 		&c.UserID,
 		&c.Created,
 		&c.Expiration,
+		&c.Action,
+		&c.Data,
 	).Scan(&newID)
 
 	if err != nil {
@@ -113,7 +120,7 @@ func (c *Code) Insert() (int, error) {
 }
 
 // CreateCode generation new code
-func (c *Code) CreateCode(userID int) (int, error) {
+func (c *Code) CreateCode(userID int, action string, data string) (int, error) {
 	codeExpMinutes, err := strconv.Atoi(os.Getenv("CODE_EXP_MINUTES"))
 	if err != nil {
 		return 0, err
@@ -128,6 +135,8 @@ func (c *Code) CreateCode(userID int) (int, error) {
 		UserID:     userID,
 		Created:    time.Now(),
 		Expiration: time.Now().Add(time.Minute * time.Duration(codeExpMinutes)),
+		Action:     action,
+		Data:       data,
 	}
 
 	_, err = code.Insert()

@@ -26,7 +26,7 @@ func (app *Config) routes() http.Handler {
 		mux.Post("/v1/login", app.Authenticate)
 		mux.Post("/v1/register", app.Registration)
 		mux.Post("/v1/confirm", app.Confirmation)
-		// mux.Post("/v1/recovery", app.Recovery)
+		mux.Post("/v1/reset", app.Reset)
 
 		// Private routes
 		mux.Group(func(mux chi.Router) {

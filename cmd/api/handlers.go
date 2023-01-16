@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aerosystems/auth-service/data"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Authenticate accepts a json payload and attempts to authenticate a user
@@ -153,12 +154,12 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			code, _ := app.Models.Code.GetLastActiveCode(user.ID)
+			code, _ := app.Models.Code.GetLastActiveCode(user.ID, "registration")
 			var XXXXXX int
 
 			if code == nil {
 				// generating confirmation code
-				XXXXXX, err = app.Models.Code.CreateCode(user.ID)
+				XXXXXX, err = app.Models.Code.CreateCode(user.ID, "registration", "")
 				if err != nil {
 					_ = app.errorJSON(w, err, http.StatusBadRequest)
 					return
@@ -192,7 +193,7 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 	}
 	newUser.ID = newUserId
 	// generating confirmation code
-	XXXXXX, err := app.Models.Code.CreateCode(newUserId)
+	XXXXXX, err := app.Models.Code.CreateCode(newUserId, "registration", "")
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
@@ -327,7 +328,6 @@ func (app *Config) Refresh(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
-
 	accessTokenClaims, ok := r.Context().Value(contextKey("accessTokenClaims")).(*AccessTokenClaims)
 	if !ok {
 		_ = app.errorJSON(w, errors.New("token is untracked"), http.StatusUnauthorized)
@@ -344,6 +344,66 @@ func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
 		Error:   false,
 		Message: fmt.Sprintf("User %s successfully logged out", accessTokenClaims.AccessUUID),
 		Data:    accessTokenClaims,
+	}
+
+	_ = app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+func (app *Config) Reset(w http.ResponseWriter, r *http.Request) {
+	var requestPayload struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// validating email
+	addr, err := app.validateEmail(requestPayload.Email)
+	if err != nil {
+		err = errors.New("email is not valid")
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+	}
+
+	// nomalizing email
+	email := app.normalizeEmail(addr)
+
+	// validating password
+	err = app.validatePassword(requestPayload.Password)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// validate against database
+	user, err := app.Models.User.GetByEmail(email)
+	if err != nil {
+		_ = app.errorJSON(w, errors.New("invalid credentials"), http.StatusUnauthorized)
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestPayload.Password), 12)
+	if err != nil {
+		_ = app.errorJSON(w, errors.New("error creating password hash"))
+		return
+	}
+
+	// generating confirmation code
+	XXXXXX, err := app.Models.Code.CreateCode(user.ID, "reset", string(hashedPassword))
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	_ = XXXXXX
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: fmt.Sprintf("User %d initialize changing password", user.ID),
+		Data:    user,
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)

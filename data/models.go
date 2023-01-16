@@ -45,4 +45,6 @@ type Code struct {
 	UserID     int       `json:"user_id"`
 	Created    time.Time `json:"created"`
 	Expiration time.Time `json:"expiration"`
+	Action     string    `json:"action"`
+	Data       string    `json:"data"`
 }
