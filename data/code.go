@@ -13,7 +13,7 @@ func (c *Code) GetByCode(XXXXXX int) (*Code, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `SELECT id, code, user_id, created, expiration, action, data
+	query := `SELECT id, code, user_id, created_at, expire_at, action, data, is_used
 				FROM codes
 				WHERE code = $1`
 
@@ -28,6 +28,7 @@ func (c *Code) GetByCode(XXXXXX int) (*Code, error) {
 		&code.Expiration,
 		&code.Action,
 		&code.Data,
+		&code.Used,
 	)
 
 	if err != nil {
@@ -41,13 +42,14 @@ func (c *Code) GetLastActiveCode(userID int, action string) (*Code, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `SELECT id, code, user_id, created, expiration, action, data 
+	query := `SELECT id, code, user_id, created_at, expire_at, action, data, is_used
 				FROM codes
 				WHERE user_id = $1
 				AND action = $2
-				AND expiration > NOW()
-				ORDER BY created DESC
-				LIMIT 11`
+				AND expire_at > NOW()
+				AND is_used = false
+				ORDER BY created_at DESC
+				LIMIT 1`
 
 	var code Code
 	row := db.QueryRowContext(ctx, query, userID, action)
@@ -60,6 +62,7 @@ func (c *Code) GetLastActiveCode(userID int, action string) (*Code, error) {
 		&code.Expiration,
 		&code.Action,
 		&code.Data,
+		&code.Used,
 	)
 
 	if err != nil {
@@ -79,11 +82,34 @@ func (c *Code) ExtendExpiration() error {
 	}
 
 	stmt := `UPDATE codes
-				SET expiration = $1
+				SET expire_at = $1
 				WHERE id = $2`
 
 	_, err = db.ExecContext(ctx, stmt,
 		codeExpMinutes,
+		c.ID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Update updates one code in the database, using the information
+// stored in the receiver c
+func (c *Code) Update() error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `UPDATE codes SET
+		is_used = $1
+		WHERE id = $2
+	`
+
+	_, err := db.ExecContext(ctx, stmt,
+		c.Used,
 		c.ID,
 	)
 
@@ -100,8 +126,8 @@ func (c *Code) Insert() (int, error) {
 	defer cancel()
 
 	var newID int
-	stmt := `INSERT INTO codes (code, user_id, created, expiration, action, data)
-			VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+	stmt := `INSERT INTO codes (code, user_id, created_at, expire_at, action, data, is_used)
+			VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 
 	err := db.QueryRowContext(ctx, stmt,
 		&c.Code,
@@ -110,6 +136,7 @@ func (c *Code) Insert() (int, error) {
 		&c.Expiration,
 		&c.Action,
 		&c.Data,
+		&c.Used,
 	).Scan(&newID)
 
 	if err != nil {
@@ -137,6 +164,7 @@ func (c *Code) CreateCode(userID int, action string, data string) (int, error) {
 		Expiration: time.Now().Add(time.Minute * time.Duration(codeExpMinutes)),
 		Action:     action,
 		Data:       data,
+		Used:       false,
 	}
 
 	_, err = code.Insert()

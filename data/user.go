@@ -14,7 +14,7 @@ func (u *User) GetAll() ([]*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `SELECT id, email, password, role, created, updated, active
+	query := `SELECT id, email, password, role, created_at, updated_at, is_active
 				FROM users
 				ORDER BY last_name`
 
@@ -53,7 +53,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `SELECT id, email, password, role, created, updated, active
+	query := `SELECT id, email, password, role, created_at, updated_at, is_active
 				FROM users
 				WHERE email = $1`
 
@@ -82,7 +82,7 @@ func (u *User) GetOne(id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `SELECT id, email, password, role, created, updated, active
+	query := `SELECT id, email, password, role, created_at, updated_at, is_active
 				FROM users
 				WHERE id = $1`
 
@@ -114,14 +114,15 @@ func (u *User) Update() error {
 
 	stmt := `UPDATE users SET
 		email = $1,
-		role = $2,
-		updated = $3,
-		active = $4
-		WHERE id = $5
+		password = $2,
+		role = $3,
+		updated_at = $4,
+		is_active = $5
+		WHERE id = $6
 	`
-
 	_, err := db.ExecContext(ctx, stmt,
 		u.Email,
+		u.Password,
 		u.Role,
 		time.Now(),
 		u.Active,
@@ -178,7 +179,7 @@ func (u *User) Insert(user User) (int, error) {
 	}
 
 	var newID int
-	stmt := `INSERT INTO users (email, password, role, created, updated, active)
+	stmt := `INSERT INTO users (email, password, role, created_at, updated_at, is_active)
 				VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 
 	err = db.QueryRowContext(ctx, stmt,

@@ -45,13 +45,18 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 	// validate against database
 	user, err := app.Models.User.GetByEmail(email)
 	if err != nil {
-		_ = app.errorJSON(w, errors.New("invalid credentials"), http.StatusUnauthorized)
+		_ = app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		return
+	}
+
+	if !user.Active {
+		_ = app.errorJSON(w, errors.New("user has did not confirm registration"), http.StatusBadRequest)
 		return
 	}
 
 	valid, err := user.PasswordMatches(requestPayload.Password)
 	if err != nil || !valid {
-		_ = app.errorJSON(w, errors.New("invalid credentials"), http.StatusUnauthorized)
+		_ = app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
 		return
 	}
 
@@ -155,11 +160,10 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 			}
 
 			code, _ := app.Models.Code.GetLastActiveCode(user.ID, "registration")
-			var XXXXXX int
 
 			if code == nil {
 				// generating confirmation code
-				XXXXXX, err = app.Models.Code.CreateCode(user.ID, "registration", "")
+				_, err = app.Models.Code.CreateCode(user.ID, "registration", "")
 				if err != nil {
 					_ = app.errorJSON(w, err, http.StatusBadRequest)
 					return
@@ -167,12 +171,12 @@ func (app *Config) Registration(w http.ResponseWriter, r *http.Request) {
 			} else {
 				// extend expiration code and return previous active code
 				code.ExtendExpiration()
-				XXXXXX = code.Code
+				_ = code.Code
 			}
 
 			payload = jsonResponse{
 				Error:   false,
-				Message: fmt.Sprintf("Updated user with Id: %d. Confirmation code: %d", user.ID, XXXXXX),
+				Message: fmt.Sprintf("Updated user with Id: %d", user.ID),
 				Data:    user,
 			}
 			_ = app.writeJSON(w, http.StatusAccepted, payload)
@@ -233,20 +237,43 @@ func (app *Config) Confirmation(w http.ResponseWriter, r *http.Request) {
 		_ = app.errorJSON(w, errors.New("code is expired"), http.StatusNotFound)
 		return
 	}
+	if code.Used {
+		_ = app.errorJSON(w, errors.New("code was used"), http.StatusNotFound)
+		return
+	}
 
 	user, err := app.Models.User.GetOne(code.UserID)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
 	}
-	user.Active = true
+
+	var payload jsonResponse
+
+	switch code.Action {
+	case "registration":
+		payload = jsonResponse{
+			Error:   false,
+			Message: fmt.Sprintf("Succesfuly confirmed registration user with Id: %d", user.ID),
+			Data:    user,
+		}
+	case "reset":
+		if !user.Active {
+			user.Active = true
+		}
+		user.Password = code.Data
+		fmt.Println("!!!!", code.Data)
+		payload = jsonResponse{
+			Error:   false,
+			Message: fmt.Sprintf("Succesfuly confirmed changing user password with Id: %d", user.ID),
+			Data:    user,
+		}
+	}
+
 	user.Update()
 
-	payload := jsonResponse{
-		Error:   false,
-		Message: fmt.Sprintf("Succesfuly confirmed registration user with Id: %d", user.ID),
-		Data:    user,
-	}
+	code.Used = true
+	code.Update()
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
 

@@ -47,4 +47,5 @@ type Code struct {
 	Expiration time.Time `json:"expiration"`
 	Action     string    `json:"action"`
 	Data       string    `json:"data"`
+	Used       bool      `json:"used"`
 }
