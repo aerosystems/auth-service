@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/aerosystems/nix-trainee-5-6-7-8/internal/models"
+	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/labstack/echo/v4"
 )
 

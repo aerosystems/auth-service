@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/aerosystems/nix-trainee-5-6-7-8/internal/helpers"
+	"github.com/aerosystems/auth-service/internal/helpers"
 	"github.com/labstack/echo/v4"
 )
 

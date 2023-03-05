@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aerosystems/nix-trainee-5-6-7-8/internal/models"
+	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/go-redis/redis/v7"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"

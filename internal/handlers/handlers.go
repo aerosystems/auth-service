@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/aerosystems/nix-trainee-5-6-7-8/internal/models"
+	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/oauth2"
 )
@@ -31,11 +31,11 @@ func NewBaseHandler(googleOauthConfig *oauth2.Config,
 ) *BaseHandler {
 	return &BaseHandler{
 		googleOauthConfig: googleOauthConfig,
-		commentRepo: commentRepo,
-		postRepo:    postRepo,
-		userRepo:    userRepo,
-		codeRepo:    codeRepo,
-		tokensRepo:  tokensRepo,
+		commentRepo:       commentRepo,
+		postRepo:          postRepo,
+		userRepo:          userRepo,
+		codeRepo:          codeRepo,
+		tokensRepo:        tokensRepo,
 	}
 }
 

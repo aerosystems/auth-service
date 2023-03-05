@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	"github.com/aerosystems/nix-trainee-5-6-7-8/internal/models"
+	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/go-redis/redis/v7"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
