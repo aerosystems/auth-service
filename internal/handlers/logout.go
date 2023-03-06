@@ -3,10 +3,10 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"github.com/aerosystems/auth-service/internal/helpers"
 	"net/http"
 
 	"github.com/aerosystems/auth-service/internal/models"
-	"github.com/labstack/echo/v4"
 )
 
 // Logout godoc
@@ -21,17 +21,17 @@ import (
 // @Failure 400 {object} Response
 // @Failure 401 {object} Response
 // @Router /users/logout [post]
-func (h *BaseHandler) Logout(c echo.Context) error {
-	// recieve AccessToken Claims from context middleware
-	accessTokenClaims, ok := c.Get("user").(*models.AccessTokenClaims)
+func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) error {
+	// receive AccessToken Claims from context middleware
+	accessTokenClaims, ok := r.Context().Value(helpers.ContextKey("accessTokenClaims")).(*models.AccessTokenClaims)
 	if !ok {
 		err := errors.New("token is untracked")
-		return WriteResponse(c, http.StatusUnauthorized, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
 	}
 
 	err := h.tokensRepo.DropCacheTokens(*accessTokenClaims)
 	if err != nil {
-		return WriteResponse(c, http.StatusUnauthorized, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
 	}
 
 	payload := Response{
@@ -39,5 +39,5 @@ func (h *BaseHandler) Logout(c echo.Context) error {
 		Message: fmt.Sprintf("User %s successfully logged out", accessTokenClaims.AccessUUID),
 		Data:    accessTokenClaims,
 	}
-	return WriteResponse(c, http.StatusAccepted, payload)
+	return WriteResponse(w, http.StatusAccepted, payload)
 }

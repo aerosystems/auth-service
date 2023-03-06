@@ -26,7 +26,7 @@ func NormalizeEmail(data string) string {
 
 	googleDomains := strings.Split(os.Getenv("GOOGLEMAIL_DOMAINS"), ",")
 
-	//checking google mail aliases
+	//checking Google mail aliases
 	if Contains(googleDomains, domain) {
 		//removing all dots from username mail
 		username = strings.ReplaceAll(username, ".", "")

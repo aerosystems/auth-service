@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/aerosystems/auth-service/internal/helpers"
-	"github.com/labstack/echo/v4"
 )
 
 type LoginRequestBody struct {
@@ -38,17 +37,17 @@ type TokensResponseBody struct {
 // @Failure 400 {object} Response
 // @Failure 404 {object} Response
 // @Router /users/login [post]
-func (h *BaseHandler) Login(c echo.Context) error {
+func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	var requestPayload LoginRequestBody
 
-	if err := c.Bind(&requestPayload); err != nil {
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+	if err := ReadRequest(w, r, &requestPayload); err != nil {
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	addr, err := helpers.ValidateEmail(requestPayload.Email)
 	if err != nil {
 		err = errors.New("email is not valid")
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	email := helpers.NormalizeEmail(addr)
@@ -58,37 +57,36 @@ func (h *BaseHandler) Login(c echo.Context) error {
 	// Minimum of one digit
 	// Minimum of one special character
 	// Minimum 8 characters length
-
 	if err := helpers.ValidatePassword(requestPayload.Password); err != nil {
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	// validate against database
 	user, err := h.userRepo.FindByEmail(email)
 	if err != nil {
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	if !user.IsActive {
 		err := errors.New("user has did not confirm registration")
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	valid, err := h.userRepo.PasswordMatches(user, requestPayload.Password)
 	if err != nil || !valid {
 		err := errors.New("invalid credentials")
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	// create pair JWT tokens
 	ts, err := h.tokensRepo.CreateToken(user.ID)
 	if err != nil {
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	// add refresh token UUID to cache
 	if err = h.tokensRepo.CreateCacheKey(user.ID, ts); err != nil {
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	tokens := TokensResponseBody{
@@ -101,5 +99,5 @@ func (h *BaseHandler) Login(c echo.Context) error {
 		Message: fmt.Sprintf("Logged in user %s", requestPayload.Email),
 		Data:    tokens,
 	}
-	return WriteResponse(c, http.StatusAccepted, payload)
+	return WriteResponse(w, http.StatusAccepted, payload)
 }

@@ -7,7 +7,6 @@ import (
 
 	"github.com/aerosystems/auth-service/internal/helpers"
 	"github.com/aerosystems/auth-service/internal/models"
-	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,7 +16,7 @@ type RegistrationRequestBody struct {
 }
 
 // Registration godoc
-// @Summary registration user by credentionals
+// @Summary registration user by credentials
 // @Description Password should contain:
 // @Description - minimum of one small case letter
 // @Description - minimum of one upper case letter
@@ -34,17 +33,17 @@ type RegistrationRequestBody struct {
 // @Failure 400 {object} Response
 // @Failure 404 {object} Response
 // @Router /users/registration [post]
-func (h *BaseHandler) Registration(c echo.Context) error {
+func (h *BaseHandler) Registration(w http.ResponseWriter, r *http.Request) error {
 	var requestPayload RegistrationRequestBody
 
-	if err := c.Bind(&requestPayload); err != nil {
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+	if err := ReadRequest(w, r, &requestPayload); err != nil {
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	addr, err := helpers.ValidateEmail(requestPayload.Email)
 	if err != nil {
 		err = errors.New("email is not valid")
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	email := helpers.NormalizeEmail(addr)
@@ -56,7 +55,7 @@ func (h *BaseHandler) Registration(c echo.Context) error {
 	// Minimum 8 characters length
 	err = helpers.ValidatePassword(requestPayload.Password)
 	if err != nil {
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	var payload Response
@@ -66,12 +65,12 @@ func (h *BaseHandler) Registration(c echo.Context) error {
 	if user != nil {
 		if user.IsActive {
 			err = errors.New("email already exists")
-			return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+			return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 		} else {
 			// updating password for inactive user
 			err := h.userRepo.ResetPassword(user, requestPayload.Password)
 			if err != nil {
-				return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+				return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 			}
 
 			code, _ := h.codeRepo.GetLastIsActiveCode(user.ID, "registration")
@@ -80,7 +79,7 @@ func (h *BaseHandler) Registration(c echo.Context) error {
 				// generating confirmation code
 				_, err = h.codeRepo.NewCode(user.ID, "registration", "")
 				if err != nil {
-					return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+					return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 				}
 			} else {
 				// extend expiration code and return previous active code
@@ -94,7 +93,7 @@ func (h *BaseHandler) Registration(c echo.Context) error {
 				Data:    nil,
 			}
 
-			return WriteResponse(c, http.StatusAccepted, payload)
+			return WriteResponse(w, http.StatusAccepted, payload)
 		}
 	}
 
@@ -113,13 +112,13 @@ func (h *BaseHandler) Registration(c echo.Context) error {
 	err = h.userRepo.Create(&newUser)
 
 	if err != nil {
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	// generating confirmation code
 	code, err := h.codeRepo.NewCode(newUser.ID, "registration", "")
 	if err != nil {
-		return WriteResponse(c, http.StatusBadRequest, NewErrorPayload(err))
+		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
 	}
 
 	payload = Response{
@@ -128,5 +127,5 @@ func (h *BaseHandler) Registration(c echo.Context) error {
 		Data:    nil,
 	}
 
-	return WriteResponse(c, http.StatusOK, payload)
+	return WriteResponse(w, http.StatusOK, payload)
 }

@@ -2,14 +2,9 @@ package main
 
 import (
 	"context"
+	"github.com/aerosystems/auth-service/internal/helpers"
 	"net/http"
 )
-
-type contextKey string
-
-func (c contextKey) String() string {
-	return string(c)
-}
 
 func (app *Config) TokenAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +38,7 @@ func (app *Config) TokenAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), contextKey("accessTokenClaims"), tokenClaims)
+		ctx := context.WithValue(r.Context(), helpers.ContextKey("accessTokenClaims"), tokenClaims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
