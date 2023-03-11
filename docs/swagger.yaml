@@ -64,7 +64,8 @@ info:
   contact:
     name: Artem Kostenko
     url: https://github.com/aerosystems
-  description: A mandatory part of any microservice infrastructure of a web application
+  description: A mandatory part of any microservice infrastructure of a modern WEB
+    application
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -146,7 +147,6 @@ paths:
     post:
       consumes:
       - application/json
-      - text/xml
       parameters:
       - description: should contain Access Token, with the Bearer started
         in: header
@@ -155,7 +155,6 @@ paths:
         type: string
       produces:
       - application/json
-      - application/xml
       responses:
         "202":
           description: Accepted
@@ -281,6 +280,30 @@ paths:
           schema:
             $ref: '#/definitions/handlers.Response'
       summary: refresh pair JWT tokens
+      tags:
+      - auth
+  /token/validate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: should contain Access Token, with the Bearer started
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: validate token
       tags:
       - auth
 swagger: "2.0"

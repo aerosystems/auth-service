@@ -8,8 +8,8 @@ import (
 )
 
 type ResetPasswordRequestBody struct {
-	Email    string `json:"email" xml:"email" example:"example@gmail.com"`
-	Password string `json:"password" xml:"password" example:"P@ssw0rd"`
+	Email    string `json:"email" example:"example@gmail.com"`
+	Password string `json:"password" example:"P@ssw0rd"`
 }
 
 // ResetPassword godoc

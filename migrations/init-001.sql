@@ -4,7 +4,7 @@
 -- https://tableplus.com/
 --
 -- Database: users
--- Generation Time: 2023-03-11 18:38:08.0260
+-- Generation Time: 2023-03-11 21:42:22.4370
 -- -------------------------------------------------------------
 
 
@@ -39,7 +39,8 @@ CREATE TABLE "public"."users" (
                                   "created_at" timestamp,
                                   "updated_at" timestamp,
                                   "role" varchar(255),
-                                  "is_active" bool DEFAULT false
+                                  "is_active" bool DEFAULT false,
+                                  "google_id" varchar(255)
 );
 
 ALTER TABLE "public"."codes" ADD FOREIGN KEY ("user_id") REFERENCES "public"."users"("id");

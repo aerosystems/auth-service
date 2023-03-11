@@ -16,9 +16,9 @@ type BaseHandler struct {
 
 // Response is the type used for sending JSON around
 type Response struct {
-	Error   bool   `json:"error" xml:"error"`
-	Message string `json:"message" xml:"message"`
-	Data    any    `json:"data,omitempty" xml:"data,omitempty"`
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
 }
 
 func NewBaseHandler(userRepo models.UserRepository,

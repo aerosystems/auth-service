@@ -20,7 +20,7 @@ type Config struct {
 
 // @title Auth Service
 // @version 1.0
-// @description A mandatory part of any microservice infrastructure of a web application
+// @description A mandatory part of any microservice infrastructure of a modern WEB application
 
 // @contact.name Artem Kostenko
 // @contact.url https://github.com/aerosystems
