@@ -1,52 +1,48 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
+	"github.com/aerosystems/auth-service/internal/handlers"
+	"github.com/aerosystems/auth-service/internal/models"
+	"github.com/aerosystems/auth-service/internal/repository"
+	"github.com/aerosystems/auth-service/pkg/mygorm"
+	"github.com/aerosystems/auth-service/pkg/myredis"
 	"log"
 	"net/http"
-	"os"
-	"time"
-
-	"github.com/aerosystems/auth-service/data"
-	"github.com/go-redis/redis/v7"
-
-	_ "github.com/jackc/pgconn"
-	_ "github.com/jackc/pgx/v4"
-	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 const webPort = "80"
 
-var counts int64
-
 type Config struct {
-	DB     *sql.DB
-	Cache  *redis.Client
-	Models data.Models
+	BaseHandler *handlers.BaseHandler
+	TokensRepo  models.TokensRepository
 }
 
-func main() {
-	log.Println("---------------------------------------------")
-	log.Println("Attempting to connect to Postgres...")
-	// connect to the database
-	connDB := connectToDB()
-	if connDB == nil {
-		log.Panic("can't connect to postgres!")
-	}
+// @title Auth Service
+// @version 1.0
+// @description A mandatory part of any microservice infrastructure of a web application
 
-	log.Println("---------------------------------------------")
-	log.Println("Attempting to connect to Redis...")
-	// connect to the database
-	connCache := connectToCache()
-	if connCache == nil {
-		log.Panic("can't connect to redis!")
-	}
+// @contact.name Artem Kostenko
+// @contact.url https://github.com/aerosystems
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /v1
+func main() {
+	clientGORM := mygorm.NewClient()
+	clientREDIS := myredis.NewClient()
+	userRepo := repository.NewUserRepo(clientGORM, clientREDIS)
+	codeRepo := repository.NewCodeRepo(clientGORM)
+	tokensRepo := repository.NewTokensRepo(clientREDIS)
 
 	app := Config{
-		DB:     connDB,
-		Cache:  connCache,
-		Models: data.New(connDB),
+		BaseHandler: handlers.NewBaseHandler(userRepo,
+			codeRepo,
+			tokensRepo,
+		),
+		TokensRepo: tokensRepo,
 	}
 
 	srv := &http.Server{
@@ -60,74 +56,4 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-}
-
-func connectToDB() *sql.DB {
-	// connect to postgres
-	dsn := os.Getenv("POSTGRES_DSN")
-
-	for {
-		connection, err := openDB(dsn)
-		if err != nil {
-			log.Println("Postgres not ready...")
-			counts++
-		} else {
-			log.Println("Connected to database!")
-			return connection
-		}
-
-		if counts > 10 {
-			log.Println(err)
-			return nil
-		}
-
-		log.Println("Backing off for two seconds...")
-		time.Sleep(2 * time.Second)
-		continue
-	}
-}
-
-func connectToCache() *redis.Client {
-	dsn := os.Getenv("REDIS_DSN")
-	password := os.Getenv("REDIS_PASSWORD")
-
-	for {
-		client := redis.NewClient(&redis.Options{
-			Addr:     dsn,
-			Password: password,
-		})
-
-		_, err := client.Ping().Result()
-
-		if err != nil {
-			log.Println("Redis not ready....")
-			counts++
-		} else {
-			return client
-		}
-
-		if counts > 10 {
-			log.Println(err)
-			return nil
-		}
-
-		log.Println("Backing off for two seconds...")
-		time.Sleep(2 * time.Second)
-		continue
-	}
-
-}
-
-func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("pgx", dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
 }

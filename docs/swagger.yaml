@@ -1,0 +1,286 @@
+basePath: /v1
+definitions:
+  handlers.CodeRequestBody:
+    properties:
+      code:
+        example: 123456
+        type: integer
+    type: object
+  handlers.LoginRequestBody:
+    properties:
+      email:
+        example: example@gmail.com
+        type: string
+      password:
+        example: P@ssw0rd
+        type: string
+    type: object
+  handlers.RefreshTokenRequestBody:
+    properties:
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+    type: object
+  handlers.RegistrationRequestBody:
+    properties:
+      email:
+        example: example@gmail.com
+        type: string
+      password:
+        example: P@ssw0rd
+        type: string
+      role:
+        example: startup
+        type: string
+    type: object
+  handlers.ResetPasswordRequestBody:
+    properties:
+      email:
+        example: example@gmail.com
+        type: string
+      password:
+        example: P@ssw0rd
+        type: string
+    type: object
+  handlers.Response:
+    properties:
+      data: {}
+      error:
+        type: boolean
+      message:
+        type: string
+    type: object
+  handlers.TokensResponseBody:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: Artem Kostenko
+    url: https://github.com/aerosystems
+  description: A mandatory part of any microservice infrastructure of a web application
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Auth Service
+  version: "1.0"
+paths:
+  /confirm:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: raw request body
+        in: body
+        name: code
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CodeRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: confirm registration/reset password with 6-digit code from email/sms
+      tags:
+      - auth
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Password should contain:
+        - minimum of one small case letter
+        - minimum of one upper case letter
+        - minimum of one digit
+        - minimum of one special character
+        - minimum 8 characters length
+        Response contain pair JWT tokens, use /token/refresh for updating them
+      parameters:
+      - description: raw request body
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.TokensResponseBody'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: login user by credentials
+      tags:
+      - auth
+  /logout:
+    post:
+      consumes:
+      - application/json
+      - text/xml
+      parameters:
+      - description: should contain Access Token, with the Bearer started
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/xml
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: logout user
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Password should contain:
+        - minimum of one small case letter
+        - minimum of one upper case letter
+        - minimum of one digit
+        - minimum of one special character
+        - minimum 8 characters length
+      parameters:
+      - description: raw request body
+        in: body
+        name: registration
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegistrationRequestBody'
+      produces:
+      - application/json l
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: registration user by credentials
+      tags:
+      - auth
+  /reset-password:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Password should contain:
+        - minimum of one small case letter
+        - minimum of one upper case letter
+        - minimum of one digit
+        - minimum of one special character
+        - minimum 8 characters length
+      parameters:
+      - description: raw request body
+        in: body
+        name: registration
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ResetPasswordRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: resetting password
+      tags:
+      - auth
+  /token/refresh:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: raw request body, should contain Refresh Token
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RefreshTokenRequestBody'
+      - description: should contain Access Token, with the Bearer started
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.TokensResponseBody'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: refresh pair JWT tokens
+      tags:
+      - auth
+swagger: "2.0"

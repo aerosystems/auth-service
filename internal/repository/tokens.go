@@ -12,18 +12,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type tokensRepo struct {
+type TokensRepo struct {
 	cache *redis.Client
 }
 
-func NewTokensRepo(cache *redis.Client) *tokensRepo {
-	return &tokensRepo{
+func NewTokensRepo(cache *redis.Client) *TokensRepo {
+	return &TokensRepo{
 		cache: cache,
 	}
 }
 
-// DropCacheKey: function that will be used to drop the JWTs metadata from Redis
-func (r *tokensRepo) DropCacheKey(UUID string) error {
+// DropCacheKey function that will be used to drop the JWTs metadata from Redis
+func (r *TokensRepo) DropCacheKey(UUID string) error {
 	err := r.cache.Del(UUID).Err()
 	if err != nil {
 		return err
@@ -31,8 +31,8 @@ func (r *tokensRepo) DropCacheKey(UUID string) error {
 	return nil
 }
 
-// createCacheKey: function that will be used to save the JWTs metadata in Redis
-func (r *tokensRepo) CreateCacheKey(userID int, td *models.TokenDetails) error {
+// CreateCacheKey function that will be used to save the JWTs metadata in Redis
+func (r *TokensRepo) CreateCacheKey(userID int, td *models.TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
 	rt := time.Unix(td.RtExpires, 0) //converting Unix to UTC(to Time object)
 	now := time.Now()
@@ -56,7 +56,7 @@ func (r *tokensRepo) CreateCacheKey(userID int, td *models.TokenDetails) error {
 	return nil
 }
 
-func (r *tokensRepo) GetCacheValue(UUID string) (*string, error) {
+func (r *TokensRepo) GetCacheValue(UUID string) (*string, error) {
 	value, err := r.cache.Get(UUID).Result()
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (r *tokensRepo) GetCacheValue(UUID string) (*string, error) {
 }
 
 // CreateToken returns JWT Token
-func (r *tokensRepo) CreateToken(userid int) (*models.TokenDetails, error) {
+func (r *TokensRepo) CreateToken(userid int) (*models.TokenDetails, error) {
 	td := &models.TokenDetails{}
 
 	accessExpMinutes, err := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))
@@ -106,7 +106,7 @@ func (r *tokensRepo) CreateToken(userid int) (*models.TokenDetails, error) {
 	return td, nil
 }
 
-func (r *tokensRepo) DecodeRefreshToken(tokenString string) (*models.RefreshTokenClaims, error) {
+func (r *TokensRepo) DecodeRefreshToken(tokenString string) (*models.RefreshTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &models.RefreshTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("REFRESH_SECRET")), nil
 	})
@@ -118,7 +118,7 @@ func (r *tokensRepo) DecodeRefreshToken(tokenString string) (*models.RefreshToke
 	}
 }
 
-func (r *tokensRepo) DecodeAccessToken(tokenString string) (*models.AccessTokenClaims, error) {
+func (r *TokensRepo) DecodeAccessToken(tokenString string) (*models.AccessTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &models.AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("ACCESS_SECRET")), nil
 	})
@@ -130,7 +130,7 @@ func (r *tokensRepo) DecodeAccessToken(tokenString string) (*models.AccessTokenC
 	}
 }
 
-func (r *tokensRepo) DropCacheTokens(accessTokenClaims models.AccessTokenClaims) error {
+func (r *TokensRepo) DropCacheTokens(accessTokenClaims models.AccessTokenClaims) error {
 	cacheJSON, _ := r.GetCacheValue(accessTokenClaims.AccessUUID)
 	accessTokenCache := new(models.AccessTokenCache)
 	err := json.Unmarshal([]byte(*cacheJSON), accessTokenCache)

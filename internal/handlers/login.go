@@ -26,28 +26,28 @@ type TokensResponseBody struct {
 // @Description - minimum of one digit
 // @Description - minimum of one special character
 // @Description - minimum 8 characters length
-// @Description Response contain pair JWT tokens, use /tokens/refresh for updating them
+// @Description Response contain pair JWT tokens, use /token/refresh for updating them
 // @Tags auth
 // @Accept  json
-// @Accept  xml
 // @Produce application/json
-// @Produce application/xml
 // @Param login body handlers.LoginRequestBody true "raw request body"
 // @Success 200 {object} Response{data=TokensResponseBody}
 // @Failure 400 {object} Response
 // @Failure 404 {object} Response
-// @Router /users/login [post]
-func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) error {
+// @Router /login [post]
+func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var requestPayload LoginRequestBody
 
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	addr, err := helpers.ValidateEmail(requestPayload.Email)
 	if err != nil {
 		err = errors.New("email is not valid")
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	email := helpers.NormalizeEmail(addr)
@@ -58,35 +58,41 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	// Minimum of one special character
 	// Minimum 8 characters length
 	if err := helpers.ValidatePassword(requestPayload.Password); err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	// validate against database
 	user, err := h.userRepo.FindByEmail(email)
 	if err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	if !user.IsActive {
 		err := errors.New("user has did not confirm registration")
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	valid, err := h.userRepo.PasswordMatches(user, requestPayload.Password)
 	if err != nil || !valid {
 		err := errors.New("invalid credentials")
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	// create pair JWT tokens
 	ts, err := h.tokensRepo.CreateToken(user.ID)
 	if err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	// add refresh token UUID to cache
 	if err = h.tokensRepo.CreateCacheKey(user.ID, ts); err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	tokens := TokensResponseBody{
@@ -99,5 +105,7 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		Message: fmt.Sprintf("Logged in user %s", requestPayload.Email),
 		Data:    tokens,
 	}
-	return WriteResponse(w, http.StatusAccepted, payload)
+
+	_ = WriteResponse(w, http.StatusAccepted, payload)
+	return
 }

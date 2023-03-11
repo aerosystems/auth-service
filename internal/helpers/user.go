@@ -50,21 +50,21 @@ func ValidatePassword(password string) error {
 		return err
 	}
 	if !done {
-		return errors.New("password should contain atleast one lower case character")
+		return errors.New("password should contain at least one lower case character")
 	}
 	done, err = regexp.MatchString("([A-Z])+", password)
 	if err != nil {
 		return err
 	}
 	if !done {
-		return errors.New("password should contain atleast one upper case character")
+		return errors.New("password should contain at least one upper case character")
 	}
 	done, err = regexp.MatchString("([0-9])+", password)
 	if err != nil {
 		return err
 	}
 	if !done {
-		return errors.New("password should contain atleast one digit")
+		return errors.New("password should contain at least one digit")
 	}
 
 	done, err = regexp.MatchString("([!@#$%^&*.?-])+", password)
@@ -72,7 +72,15 @@ func ValidatePassword(password string) error {
 		return err
 	}
 	if !done {
-		return errors.New("password should contain atleast one special character")
+		return errors.New("password should contain at least one special character")
+	}
+	return nil
+}
+
+func ValidateRole(role string) error {
+	trustRoles := strings.Split(os.Getenv("TRUST_ROLES"), ",")
+	if !Contains(trustRoles, role) {
+		return errors.New("role exists in trusted roles")
 	}
 	return nil
 }

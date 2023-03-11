@@ -18,21 +18,20 @@ type RefreshTokenRequestBody struct {
 // @Summary refresh pair JWT tokens
 // @Tags auth
 // @Accept  json
-// @Accept  xml
 // @Produce application/json
-// @Produce application/xml
 // @Param login body handlers.RefreshTokenRequestBody true "raw request body, should contain Refresh Token"
 // @Param Authorization header string true "should contain Access Token, with the Bearer started"
 // @Success 200 {object} Response{data=TokensResponseBody}
 // @Failure 400 {object} Response
 // @Failure 401 {object} Response
-// @Router /tokens/refresh [post]
-func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) error {
+// @Router /token/refresh [post]
+func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	// receive AccessToken Claims from context middleware
 	accessTokenClaims, ok := r.Context().Value(helpers.ContextKey("accessTokenClaims")).(*models.AccessTokenClaims)
 	if !ok {
 		err := errors.New("token is untracked")
-		return WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
+		return
 	}
 
 	// getting Refresh Token from Redis cache
@@ -40,20 +39,23 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) error
 	accessTokenCache := new(models.AccessTokenCache)
 	err := json.Unmarshal([]byte(*cacheJSON), accessTokenCache)
 	if err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 	cacheRefreshTokenUUID := accessTokenCache.RefreshUUID
 
 	var requestPayload RefreshTokenRequestBody
 
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	// validate & parse refresh token claims
 	refreshTokenClaims, err := h.tokensRepo.DecodeRefreshToken(requestPayload.RefreshToken)
 	if err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 	requestRefreshTokenUUID := refreshTokenClaims.RefreshUUID
 
@@ -65,19 +67,22 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) error
 		// drop request RefreshToken UUID from cache
 		_ = h.tokensRepo.DropCacheKey(requestRefreshTokenUUID)
 		err := errors.New("hmmm... refresh token in request body does not match refresh token which publish access token")
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	// create pair JWT tokens
 	ts, err := h.tokensRepo.CreateToken(refreshTokenClaims.UserID)
 	if err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	// add refresh token UUID to cache
 	err = h.tokensRepo.CreateCacheKey(refreshTokenClaims.UserID, ts)
 	if err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	tokens := TokensResponseBody{
@@ -91,5 +96,6 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) error
 		Data:    tokens,
 	}
 
-	return WriteResponse(w, http.StatusAccepted, payload)
+	_ = WriteResponse(w, http.StatusAccepted, payload)
+	return
 }

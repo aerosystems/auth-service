@@ -20,18 +20,20 @@ import (
 // @Success 202 {object} Response
 // @Failure 400 {object} Response
 // @Failure 401 {object} Response
-// @Router /users/logout [post]
-func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) error {
+// @Router /logout [post]
+func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// receive AccessToken Claims from context middleware
 	accessTokenClaims, ok := r.Context().Value(helpers.ContextKey("accessTokenClaims")).(*models.AccessTokenClaims)
 	if !ok {
 		err := errors.New("token is untracked")
-		return WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
+		return
 	}
 
 	err := h.tokensRepo.DropCacheTokens(*accessTokenClaims)
 	if err != nil {
-		return WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
+		return
 	}
 
 	payload := Response{
@@ -39,5 +41,6 @@ func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) error {
 		Message: fmt.Sprintf("User %s successfully logged out", accessTokenClaims.AccessUUID),
 		Data:    accessTokenClaims,
 	}
-	return WriteResponse(w, http.StatusAccepted, payload)
+	_ = WriteResponse(w, http.StatusAccepted, payload)
+	return
 }

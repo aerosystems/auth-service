@@ -13,46 +13,50 @@ type CodeRequestBody struct {
 	Code int `json:"code" xml:"code" example:"123456"`
 }
 
-// Confirmation godoc
+// Confirm godoc
 // @Summary confirm registration/reset password with 6-digit code from email/sms
 // @Tags auth
 // @Accept  json
-// @Accept  xml
 // @Produce application/json
-// @Produce application/xml
 // @Param code body handlers.CodeRequestBody true "raw request body"
 // @Success 200 {object} Response
 // @Failure 400 {object} Response
 // @Failure 404 {object} Response
-// @Router /users/confirmation [post]
-func (h *BaseHandler) Confirmation(w http.ResponseWriter, r *http.Request) error {
+// @Router /confirm [post]
+func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	var requestPayload CodeRequestBody
 
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	if err := helpers.ValidateCode(requestPayload.Code); err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	code, err := h.codeRepo.GetByCode(requestPayload.Code)
 	if err != nil {
 		err = errors.New("code is not found")
-		return WriteResponse(w, http.StatusNotFound, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(err))
+		return
 	}
 	if code.ExpireAt.Before(time.Now()) {
 		err := errors.New("code is expired")
-		return WriteResponse(w, http.StatusNotFound, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(err))
+		return
 	}
 	if code.IsUsed {
 		err := errors.New("code was used")
-		return WriteResponse(w, http.StatusNotFound, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(err))
+		return
 	}
 
 	user, err := h.userRepo.FindByID(code.UserID)
 	if err != nil {
-		return WriteResponse(w, http.StatusNotFound, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(err))
+		return
 	}
 
 	var payload Response
@@ -80,14 +84,17 @@ func (h *BaseHandler) Confirmation(w http.ResponseWriter, r *http.Request) error
 
 	err = h.userRepo.Update(user)
 	if err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
 	code.IsUsed = true
 	err = h.codeRepo.Update(code)
 	if err != nil {
-		return WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(err))
+		return
 	}
 
-	return WriteResponse(w, http.StatusAccepted, payload)
+	_ = WriteResponse(w, http.StatusAccepted, payload)
+	return
 }

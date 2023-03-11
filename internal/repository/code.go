@@ -10,23 +10,23 @@ import (
 	"gorm.io/gorm"
 )
 
-type codeRepo struct {
+type CodeRepo struct {
 	db *gorm.DB
 }
 
-func NewCodeRepo(db *gorm.DB) *codeRepo {
-	return &codeRepo{
+func NewCodeRepo(db *gorm.DB) *CodeRepo {
+	return &CodeRepo{
 		db: db,
 	}
 }
 
-func (r *codeRepo) FindAll() (*[]models.Code, error) {
+func (r *CodeRepo) FindAll() (*[]models.Code, error) {
 	var codes []models.Code
 	r.db.Find(&codes)
 	return &codes, nil
 }
 
-func (r *codeRepo) FindByID(ID int) (*models.Code, error) {
+func (r *CodeRepo) FindByID(ID int) (*models.Code, error) {
 	var code models.Code
 	result := r.db.Find(&code, ID)
 	if result.Error != nil {
@@ -35,7 +35,7 @@ func (r *codeRepo) FindByID(ID int) (*models.Code, error) {
 	return &code, nil
 }
 
-func (r *codeRepo) Create(code *models.Code) error {
+func (r *CodeRepo) Create(code *models.Code) error {
 	result := r.db.Create(&code)
 	if result.Error != nil {
 		return result.Error
@@ -43,7 +43,7 @@ func (r *codeRepo) Create(code *models.Code) error {
 	return nil
 }
 
-func (r *codeRepo) Update(code *models.Code) error {
+func (r *CodeRepo) Update(code *models.Code) error {
 	result := r.db.Save(&code)
 	if result.Error != nil {
 		return result.Error
@@ -51,7 +51,7 @@ func (r *codeRepo) Update(code *models.Code) error {
 	return nil
 }
 
-func (r *codeRepo) Delete(code *models.Code) error {
+func (r *CodeRepo) Delete(code *models.Code) error {
 	result := r.db.Delete(&code)
 	if result.Error != nil {
 		return result.Error
@@ -59,7 +59,7 @@ func (r *codeRepo) Delete(code *models.Code) error {
 	return nil
 }
 
-func (r *codeRepo) GetByCode(Code int) (*models.Code, error) {
+func (r *CodeRepo) GetByCode(Code int) (*models.Code, error) {
 	var code models.Code
 	result := r.db.Where("code = ?", Code).First(&code)
 	if result.Error != nil {
@@ -68,7 +68,7 @@ func (r *codeRepo) GetByCode(Code int) (*models.Code, error) {
 	return &code, nil
 }
 
-func (r *codeRepo) GetLastIsActiveCode(UserID int, Action string) (*models.Code, error) {
+func (r *CodeRepo) GetLastIsActiveCode(UserID int, Action string) (*models.Code, error) {
 	var code models.Code
 	result := r.db.Where("user_id = ? AND action = ?", UserID, Action).First(&code)
 	if result.Error != nil {
@@ -77,7 +77,7 @@ func (r *codeRepo) GetLastIsActiveCode(UserID int, Action string) (*models.Code,
 	return &code, nil
 }
 
-func (r *codeRepo) ExtendExpiration(code *models.Code) error {
+func (r *CodeRepo) ExtendExpiration(code *models.Code) error {
 	codeExpMinutes, err := strconv.Atoi(os.Getenv("CODE_EXP_MINUTES"))
 	if err != nil {
 		return err
@@ -91,7 +91,7 @@ func (r *codeRepo) ExtendExpiration(code *models.Code) error {
 }
 
 // NewCode CreateCode generation new code
-func (r *codeRepo) NewCode(UserID int, Action string, Data string) (*models.Code, error) {
+func (r *CodeRepo) NewCode(UserID int, Action string, Data string) (*models.Code, error) {
 	codeExpMinutes, err := strconv.Atoi(os.Getenv("CODE_EXP_MINUTES"))
 	if err != nil {
 		return nil, err

@@ -4,16 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/aerosystems/auth-service/internal/models"
-	"golang.org/x/oauth2"
 	"io"
 	"net/http"
 )
 
 type BaseHandler struct {
-	googleOauthConfig *oauth2.Config
-	userRepo          models.UserRepository
-	codeRepo          models.CodeRepository
-	tokensRepo        models.TokensRepository
+	userRepo   models.UserRepository
+	codeRepo   models.CodeRepository
+	tokensRepo models.TokensRepository
 }
 
 // Response is the type used for sending JSON around
@@ -23,16 +21,14 @@ type Response struct {
 	Data    any    `json:"data,omitempty" xml:"data,omitempty"`
 }
 
-func NewBaseHandler(googleOauthConfig *oauth2.Config,
-	userRepo models.UserRepository,
+func NewBaseHandler(userRepo models.UserRepository,
 	codeRepo models.CodeRepository,
 	tokensRepo models.TokensRepository,
 ) *BaseHandler {
 	return &BaseHandler{
-		googleOauthConfig: googleOauthConfig,
-		userRepo:          userRepo,
-		codeRepo:          codeRepo,
-		tokensRepo:        tokensRepo,
+		userRepo:   userRepo,
+		codeRepo:   codeRepo,
+		tokensRepo: tokensRepo,
 	}
 }
 
