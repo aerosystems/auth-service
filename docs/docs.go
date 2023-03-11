@@ -128,12 +128,10 @@ const docTemplate = `{
         "/logout": {
             "post": {
                 "consumes": [
-                    "application/json",
-                    "text/xml"
+                    "application/json"
                 ],
                 "produces": [
-                    "application/json",
-                    "application/xml"
+                    "application/json"
                 ],
                 "tags": [
                     "auth"
@@ -325,6 +323,43 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/token/validate": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "validate token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "should contain Access Token, with the Bearer started",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Response"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -424,7 +459,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/v1",
 	Schemes:          []string{},
 	Title:            "Auth Service",
-	Description:      "A mandatory part of any microservice infrastructure of a web application",
+	Description:      "A mandatory part of any microservice infrastructure of a modern WEB application",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

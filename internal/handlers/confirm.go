@@ -10,7 +10,7 @@ import (
 )
 
 type CodeRequestBody struct {
-	Code int `json:"code" xml:"code" example:"123456"`
+	Code int `json:"code" example:"123456"`
 }
 
 // Confirm godoc

@@ -26,7 +26,7 @@ func (app *Config) routes() http.Handler {
 		mux.Use(middleware.Heartbeat("/ping"))
 
 		mux.Get("/docs/*", httpSwagger.Handler(
-			httpSwagger.URL("doc.json"), //The url pointing to API definition
+			httpSwagger.URL("doc.json"), // The url pointing to API definition
 		))
 
 		mux.Post("/v1/login", app.BaseHandler.Login)
@@ -49,6 +49,7 @@ func (app *Config) routes() http.Handler {
 
 			mux.Post("/v1/logout", app.BaseHandler.Logout)
 			mux.Post("/v1/token/refresh", app.BaseHandler.RefreshToken)
+			mux.Get("/v1/token/validate", app.BaseHandler.ValidateToken)
 		})
 	})
 
