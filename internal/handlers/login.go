@@ -31,9 +31,9 @@ type TokensResponseBody struct {
 // @Produce application/json
 // @Param login body handlers.LoginRequestBody true "raw request body"
 // @Success 200 {object} Response{data=TokensResponseBody}
-// @Failure 400 {object} Response
-// @Failure 404 {object} Response
-// @Failure 500 {object} Response
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /login [post]
 func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var requestPayload LoginRequestBody

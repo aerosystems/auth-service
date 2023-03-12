@@ -16,9 +16,9 @@ import (
 // @Produce application/json
 // @Param Authorization header string true "should contain Access Token, with the Bearer started"
 // @Success 200 {object} Response
-// @Failure 400 {object} Response
-// @Failure 401 {object} Response
-// @Failure 500 {object} Response
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /logout [post]
 func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// receive AccessToken Claims from context middleware

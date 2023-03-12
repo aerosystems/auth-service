@@ -20,9 +20,9 @@ type CodeRequestBody struct {
 // @Produce application/json
 // @Param code body handlers.CodeRequestBody true "raw request body"
 // @Success 200 {object} Response
-// @Failure 400 {object} Response
-// @Failure 404 {object} Response
-// @Failure 500 {object} Response
+// @Failure 400 {object} ErrorResponse
+// @Failure 404 {object} ErrorResponse
+// @Failure 500 {object} ErrorResponse
 // @Router /confirm [post]
 func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	var requestPayload CodeRequestBody
