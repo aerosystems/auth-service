@@ -101,10 +101,10 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 					_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500012, "could not extend expiration date Code", err))
 					return
 				}
-
-				// TODO Send confirmation code
-				_ = code.Code
 			}
+
+			// TODO Send confirmation code
+			_ = code.Code
 
 			payload := NewResponsePayload(
 				fmt.Sprintf("updated User with Email: %s", requestPayload.Email),
