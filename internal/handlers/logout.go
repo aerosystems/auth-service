@@ -15,30 +15,30 @@ import (
 // @Accept  json
 // @Produce application/json
 // @Param Authorization header string true "should contain Access Token, with the Bearer started"
-// @Success 202 {object} Response
+// @Success 200 {object} Response
 // @Failure 400 {object} Response
 // @Failure 401 {object} Response
+// @Failure 500 {object} Response
 // @Router /logout [post]
 func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// receive AccessToken Claims from context middleware
 	accessTokenClaims, ok := r.Context().Value(helpers.ContextKey("accessTokenClaims")).(*models.AccessTokenClaims)
 	if !ok {
-		err := errors.New("token is untracked")
-		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
+		err := errors.New("could not get token claims from Access Token")
+		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(401001, "could not get token claims from Access Token", err))
 		return
 	}
 
 	err := h.tokensRepo.DropCacheTokens(*accessTokenClaims)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(err))
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not drop Access Token from storage", err))
 		return
 	}
 
-	payload := Response{
-		Error:   false,
-		Message: fmt.Sprintf("User %s successfully logged out", accessTokenClaims.AccessUUID),
-		Data:    accessTokenClaims,
-	}
-	_ = WriteResponse(w, http.StatusAccepted, payload)
+	payload := NewResponsePayload(
+		fmt.Sprintf("User %s successfully logged out", accessTokenClaims.AccessUUID),
+		accessTokenClaims,
+	)
+	_ = WriteResponse(w, http.StatusOK, payload)
 	return
 }

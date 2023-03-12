@@ -103,6 +103,6 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 		tokens,
 	)
 
-	_ = WriteResponse(w, http.StatusAccepted, payload)
+	_ = WriteResponse(w, http.StatusOK, payload)
 	return
 }

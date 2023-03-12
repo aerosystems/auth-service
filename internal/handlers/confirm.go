@@ -94,6 +94,6 @@ func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = WriteResponse(w, http.StatusAccepted, payload)
+	_ = WriteResponse(w, http.StatusOK, payload)
 	return
 }
