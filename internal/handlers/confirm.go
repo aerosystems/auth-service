@@ -20,6 +20,7 @@ type CodeRequestBody struct {
 // @Produce application/json
 // @Param code body handlers.CodeRequestBody true "raw request body"
 // @Success 200 {object} Response
+// @Failure 400 {object} Response
 // @Failure 404 {object} Response
 // @Failure 500 {object} Response
 // @Router /confirm [post]
