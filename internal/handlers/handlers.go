@@ -93,7 +93,7 @@ func NewResponsePayload(message string, data interface{}) *Response {
 
 func NewErrorPayload(code int, message string, err error) *ErrorResponse {
 	switch os.Getenv("APP_ENV") {
-	case "dev":
+	case "DEV":
 		return &ErrorResponse{
 			Error:   true,
 			Code:    code,
