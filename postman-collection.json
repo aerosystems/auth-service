@@ -229,6 +229,44 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "/v1/token/validate",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdXVpZCI6IjZmYmJmMzc2LTc2MDItNDVkMS05NGU0LTBiYjEzZTJjZmIxNSIsImV4cCI6MTY3ODU3MjAyNSwidXNlcl9pZCI6MzF9.4WH_69aquUQit6tpGSlSfaM8fjDeFC7ITX7GnY2ASLQ",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/v1/token/validate",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"v1",
+						"token",
+						"validate"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

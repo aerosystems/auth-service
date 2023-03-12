@@ -17,31 +17,30 @@ func (app *Config) TokenAuthMiddleware(next http.Handler) http.Handler {
 
 		accessToken, err := app.GetAccessTokenFromHeader(r)
 		if err != nil {
-
-			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(err))
+			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(401002, "could not get Access Token from Header Authorization", err))
 			return
 		}
 
 		token, err := app.VerifyToken(*accessToken)
 		if err != nil {
-			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(err))
+			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(401003, "could not verify Access Token", err))
 			return
 		}
 
 		if !token.Valid {
-			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(err))
+			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(401004, "access Token does not valid", err))
 			return
 		}
 
 		tokenClaims, err := app.TokensRepo.DecodeAccessToken(*accessToken)
 		if err != nil {
-			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(err))
+			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(401005, "could not decode Access Token", err))
 			return
 		}
 
 		_, err = app.TokensRepo.GetCacheValue(tokenClaims.AccessUUID)
 		if err != nil {
-			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(err))
+			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(401006, "could not get User data from storage", err))
 			return
 		}
 
