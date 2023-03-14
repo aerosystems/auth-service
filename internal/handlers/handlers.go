@@ -107,5 +107,4 @@ func NewErrorPayload(code int, message string, err error) *ErrorResponse {
 			Message: message,
 		}
 	}
-
 }
