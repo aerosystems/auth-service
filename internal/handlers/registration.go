@@ -33,7 +33,6 @@ type RegistrationRequestBody struct {
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /register [post]
-
 func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var requestPayload RegistrationRequestBody
 
