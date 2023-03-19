@@ -33,7 +33,7 @@ func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := helpers.ValidateCode(requestPayload.Code); err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400002, "claim Code does not valid", err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400004, "claim Code does not valid", err))
 		return
 	}
 
