@@ -14,7 +14,7 @@ import (
 // @Produce application/json
 // @Param Authorization header string true "should contain Access Token, with the Bearer started"
 // @Success 200 {object} Response
-// @Failure 401 {object} Response
+// @Failure 401 {object} ErrorResponse
 // @Router /token/validate [get]
 func (h *BaseHandler) ValidateToken(w http.ResponseWriter, r *http.Request) {
 	// receive AccessToken Claims from context middleware

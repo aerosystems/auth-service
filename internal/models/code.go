@@ -3,14 +3,14 @@ package models
 import "time"
 
 type Code struct {
-	ID        int       `json:"id" gorm:"<-"`
-	Code      int       `json:"code" gorm:"<-"`
-	UserID    int       `json:"user_id" gorm:"<-"`
-	CreatedAt time.Time `json:"created_at" gorm:"<-"`
-	ExpireAt  time.Time `json:"expire_at" gorm:"<-"`
-	Action    string    `json:"action" gorm:"<-"`
-	Data      string    `json:"data" gorm:"<-"`
-	IsUsed    bool      `json:"is_used" gorm:"<-"`
+	ID        int       `json:"id" gorm:"primaryKey;unique;autoIncrement"`
+	Code      int       `json:"code"`
+	UserID    int       `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+	ExpireAt  time.Time `json:"expire_at"`
+	Action    string    `json:"action"`
+	Data      string    `json:"data"`
+	IsUsed    bool      `json:"is_used"`
 }
 
 type CodeRepository interface {
