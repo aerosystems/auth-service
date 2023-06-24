@@ -6,6 +6,16 @@ definitions:
         example: 123456
         type: integer
     type: object
+  handlers.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        type: boolean
+      message:
+        type: string
+    type: object
   handlers.LoginRequestBody:
     properties:
       email:
@@ -93,11 +103,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: confirm registration/reset password with 6-digit code from email/sms
       tags:
       - auth
@@ -135,11 +149,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: login user by credentials
       tags:
       - auth
@@ -156,18 +174,22 @@ paths:
       produces:
       - application/json
       responses:
-        "202":
-          description: Accepted
+        "200":
+          description: OK
           schema:
             $ref: '#/definitions/handlers.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: logout user
       tags:
       - auth
@@ -199,11 +221,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: registration user by credentials
       tags:
       - auth
@@ -235,11 +261,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: resetting password
       tags:
       - auth
@@ -274,16 +304,20 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.Response'
-      summary: refresh pair JWT tokens
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: refresh a pair of JWT tokens
       tags:
       - auth
   /token/validate:
-    post:
+    get:
       consumes:
       - application/json
       parameters:
@@ -302,7 +336,7 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.Response'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: validate token
       tags:
       - auth

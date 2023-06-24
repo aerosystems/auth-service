@@ -3,14 +3,14 @@ package models
 import "time"
 
 type User struct {
-	ID        int       `json:"id" gorm:"<-"`
-	Email     string    `json:"email" gorm:"<-"`
-	Password  string    `json:"-" gorm:"<-"`
-	Role      string    `json:"role" gorm:"<-"`
-	CreatedAt time.Time `json:"created_at" gorm:"<-"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"<-"`
-	IsActive  bool      `json:"is_active" gorm:"<-"`
-	GoogleID  string    `json:"google_id" gorm:"<-"`
+	ID        int       `json:"id" gorm:"primaryKey;unique;autoIncrement"`
+	Email     string    `json:"email" gorm:"unique"`
+	Password  string    `json:"-"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	IsActive  bool      `json:"is_active"`
+	GoogleID  string    `json:"google_id"`
 }
 
 type UserRepository interface {
