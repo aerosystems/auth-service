@@ -2,9 +2,8 @@ package handlers
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"net/http"
-
-	"github.com/aerosystems/auth-service/internal/helpers"
 )
 
 type LoginRequestBody struct {
@@ -19,78 +18,67 @@ type TokensResponseBody struct {
 
 // Login godoc
 // @Summary login user by credentials
+// @Description Username should contain:
+// @Description - lower, upper case latin letters and digits
+// @Description - minimum 8 characters length
+// @Description - maximum 40 characters length
 // @Description Password should contain:
 // @Description - minimum of one small case letter
 // @Description - minimum of one upper case letter
 // @Description - minimum of one digit
 // @Description - minimum of one special character
 // @Description - minimum 8 characters length
-// @Description Response contain pair JWT tokens, use /token/refresh for updating them
+// @Description - maximum 40 characters length
+// @Description Response contain pair JWT tokens, use /v1/tokens/refresh for updating them
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param login body handlers.LoginRequestBody true "raw request body"
+// @Param login body LoginRequestBody true "raw request body"
 // @Success 200 {object} Response{data=TokensResponseBody}
-// @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /login [post]
-func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
+// @Failure 400 {object} Response
+// @Failure 404 {object} Response
+// @Failure 500 {object} Response
+// @Router /v1/auth/login [post]
+func (h *BaseHandler) Login(c echo.Context) error {
 	var requestPayload LoginRequestBody
 
-	if err := ReadRequest(w, r, &requestPayload); err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400001, "request payload is incorrect", err))
-		return
+	if err := c.Bind(&requestPayload); err != nil {
+		return ErrorResponse(c, http.StatusBadRequest, "invalid request body", err)
 	}
 
-	addr, err := helpers.ValidateEmail(requestPayload.Email)
-	if err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400005, "claim Email does not valid", err))
-		return
+	if err := validators.ValidateUsername(requestPayload.Username); err != nil {
+		return ErrorResponse(c, http.StatusBadRequest, "invalid username", err)
 	}
 
-	email := helpers.NormalizeEmail(addr)
-
-	// Minimum of one small case letter
-	// Minimum of one upper case letter
-	// Minimum of one digit
-	// Minimum of one special character
-	// Minimum 8 characters length
-	if err := helpers.ValidatePassword(requestPayload.Password); err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400006, "claim Password does not valid", err))
-		return
+	if err := validators.ValidatePassword(requestPayload.Password); err != nil {
+		return ErrorResponse(c, http.StatusBadRequest, "invalid password", err)
 	}
 
-	// validate against database
-	user, err := h.userRepo.FindByEmail(email)
-	if err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400007, "could not find User by Email", err))
-		return
+	//checking if user is existing
+	user, err := h.userRepo.FindByUsername(requestPayload.Username)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return ErrorResponse(c, http.StatusBadRequest, "error while finding user", err)
 	}
-
-	if !user.IsActive {
-		err := fmt.Errorf("user %d did not confirm registration yet", user.ID)
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "user did not confirm registration yet", err))
-		return
+	if user == nil {
+		err := fmt.Errorf("user with username %s does not exist", requestPayload.Username)
+		return ErrorResponse(c, http.StatusNotFound, "user not found", err)
 	}
 
 	valid, err := h.userRepo.PasswordMatches(user, requestPayload.Password)
 	if err != nil || !valid {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400009, "invalid credentials", err))
-		return
+		err := errors.New("invalid credentials")
+		return ErrorResponse(c, http.StatusUnauthorized, err.Error(), err)
 	}
 
-	// create a pair of JWT tokens
-	ts, err := h.tokensRepo.CreateToken(user.ID)
+	// create pair JWT tokens
+	ts, err := h.tokenService.CreateToken(user.ID)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not to create a pair of JWT Tokens", err))
-		return
+		return ErrorResponse(c, http.StatusInternalServerError, "error creating tokens", err)
 	}
 
-	// add a refresh token UUID to cache
-	if err = h.tokensRepo.CreateCacheKey(user.ID, ts); err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500004, "could not to add a Refresh Token UUID to cache", err))
-		return
+	// add refresh token UUID to cache
+	if err = h.tokenService.CreateCacheKey(user.ID, ts); err != nil {
+		return ErrorResponse(c, http.StatusInternalServerError, "error creating cache tokens", err)
 	}
 
 	tokens := TokensResponseBody{
@@ -98,8 +86,5 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: ts.RefreshToken,
 	}
 
-	payload := NewResponsePayload(fmt.Sprintf("logged in User %s", requestPayload.Email), tokens)
-
-	_ = WriteResponse(w, http.StatusOK, payload)
-	return
+	return SuccessResponse(c, http.StatusOK, fmt.Sprintf("user %s is logged in", requestPayload.Username), tokens)
 }
