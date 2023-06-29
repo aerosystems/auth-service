@@ -1,4 +1,4 @@
-package mygorm
+package GormPostgres
 
 import (
 	"log"

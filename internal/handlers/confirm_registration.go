@@ -3,10 +3,9 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"github.com/aerosystems/auth-service/pkg/validators"
 	"net/http"
 	"time"
-
-	"github.com/aerosystems/auth-service/internal/helpers"
 )
 
 type CodeRequestBody struct {
@@ -32,7 +31,7 @@ func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := helpers.ValidateCode(requestPayload.Code); err != nil {
+	if err := validators.ValidateCode(requestPayload.Code); err != nil {
 		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400004, "claim Code does not valid", err))
 		return
 	}

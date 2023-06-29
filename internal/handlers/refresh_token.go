@@ -29,21 +29,21 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate & parse refresh token claims
-	refreshTokenClaims, err := h.tokensRepo.DecodeRefreshToken(requestPayload.RefreshToken)
+	refreshTokenClaims, err := h.tokenService.DecodeRefreshToken(requestPayload.RefreshToken)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400015, "could not validate & parse Refresh Token claims", err))
 		return
 	}
 
 	// create pair JWT tokens
-	ts, err := h.tokensRepo.CreateToken(refreshTokenClaims.UserID)
+	ts, err := h.tokenService.CreateToken(refreshTokenClaims.UserID)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not to create a pair of JWT Tokens", err))
 		return
 	}
 
 	// add refresh token UUID to cache
-	err = h.tokensRepo.CreateCacheKey(refreshTokenClaims.UserID, ts)
+	err = h.tokenService.CreateCacheKey(refreshTokenClaims.UserID, ts)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500004, "could not to add a Refresh Token UUID to cache", err))
 		return

@@ -3,20 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/aerosystems/auth-service/internal/handlers"
-	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository"
-	"github.com/aerosystems/auth-service/pkg/mygorm"
-	"github.com/aerosystems/auth-service/pkg/myredis"
+	GormPostgres "github.com/aerosystems/auth-service/pkg/gorm_postgres"
+	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
+	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"log"
 	"net/http"
 )
-
-const webPort = "80"
-
-type Config struct {
-	BaseHandler *handlers.BaseHandler
-	TokensRepo  models.TokensRepository
-}
 
 // @title Auth Service
 // @version 1.0
@@ -31,26 +24,29 @@ type Config struct {
 // @host localhost:8080
 // @BasePath /v1
 func main() {
-	clientGORM := mygorm.NewClient()
-	clientREDIS := myredis.NewClient()
+	clientGORM := GormPostgres.NewClient()
+	clientREDIS := RedisClient.NewClient()
+
 	userRepo := repository.NewUserRepo(clientGORM, clientREDIS)
 	codeRepo := repository.NewCodeRepo(clientGORM)
-	tokensRepo := repository.NewTokensRepo(clientREDIS)
+
+	tokenService := TokenService.NewService(clientREDIS)
 
 	app := Config{
+		WebPort: "80",
 		BaseHandler: handlers.NewBaseHandler(userRepo,
 			codeRepo,
-			tokensRepo,
+			tokenService,
 		),
-		TokensRepo: tokensRepo,
+		TokenService: tokenService,
 	}
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
+		Addr:    fmt.Sprintf(":%s", app.WebPort),
 		Handler: app.routes(),
 	}
 
-	log.Printf("Starting authentication end service on port %s\n", webPort)
+	log.Printf("Starting authentication end service on port %s\n", app.WebPort)
 	err := srv.ListenAndServe()
 
 	if err != nil {

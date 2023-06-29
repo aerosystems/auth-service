@@ -3,7 +3,7 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/aerosystems/auth-service/internal/helpers"
+	"github.com/aerosystems/auth-service/pkg/validators"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -38,21 +38,21 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addr, err := helpers.ValidateEmail(requestPayload.Email)
+	addr, err := validators.ValidateEmail(requestPayload.Email)
 	if err != nil {
 		err = errors.New("email is not valid")
 		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400005, "claim Email does not valid", err))
 		return
 	}
 
-	email := helpers.NormalizeEmail(addr)
+	email := validators.NormalizeEmail(addr)
 
 	// Minimum of one small case letter
 	// Minimum of one upper case letter
 	// Minimum of one digit
 	// Minimum of one special character
 	// Minimum 8 characters length
-	err = helpers.ValidatePassword(requestPayload.Password)
+	err = validators.ValidatePassword(requestPayload.Password)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400006, "claim Password does not valid", err))
 		return

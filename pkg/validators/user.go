@@ -2,32 +2,48 @@ package validators
 
 import (
 	"errors"
+	"net/mail"
+	"os"
 	"regexp"
+	"strings"
 )
 
-func ValidateUsername(username string) error {
-	if len(username) < 4 {
-		return errors.New("username should be of 4 characters long")
-	}
-	if len(username) > 40 {
-		return errors.New("username length should be maximum 40 characters long")
-	}
-	done, err := regexp.MatchString("([a-zA-Z0-9])+", username)
+func ValidateEmail(data string) (string, error) {
+	email, err := mail.ParseAddress(data)
 	if err != nil {
-		return err
+		return "", err
 	}
-	if !done {
-		return errors.New("username should contain only lower, upper case latin letters and digits")
+
+	return email.Address, nil
+}
+
+func NormalizeEmail(data string) string {
+	addr := strings.ToLower(data)
+
+	arrAddr := strings.Split(addr, "@")
+	username := arrAddr[0]
+	domain := arrAddr[1]
+
+	googleDomains := strings.Split(os.Getenv("GOOGLEMAIL_DOMAINS"), ",")
+
+	//checking Google mail aliases
+	if Contains(googleDomains, domain) {
+		//removing all dots from username mail
+		username = strings.ReplaceAll(username, ".", "")
+		//removing all characters after +
+		if strings.Contains(username, "+") {
+			res := strings.Split(username, "+")
+			username = res[0]
+		}
+		addr = username + "@gmail.com"
 	}
-	return nil
+
+	return addr
 }
 
 func ValidatePassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("password should be of 8 characters long")
-	}
-	if len(password) > 40 {
-		return errors.New("password length should be maximum 40 characters long")
 	}
 	done, err := regexp.MatchString("([a-z])+", password)
 	if err != nil {
@@ -59,4 +75,21 @@ func ValidatePassword(password string) error {
 		return errors.New("password should contain at least one special character")
 	}
 	return nil
+}
+
+func ValidateRole(role string) error {
+	trustRoles := strings.Split(os.Getenv("TRUST_ROLES"), ",")
+	if !Contains(trustRoles, role) {
+		return errors.New("role exists in trusted roles")
+	}
+	return nil
+}
+
+func Contains(a []string, x string) bool {
+	for _, n := range a {
+		if x == n {
+			return true
+		}
+	}
+	return false
 }

@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/aerosystems/auth-service/internal/models"
+	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"io"
 	"net/http"
 	"os"
 )
 
 type BaseHandler struct {
-	userRepo   models.UserRepository
-	codeRepo   models.CodeRepository
-	tokensRepo models.TokensRepository
+	userRepo     models.UserRepository
+	codeRepo     models.CodeRepository
+	tokenService *TokenService.Service
 }
 
 // Response is the type used for sending JSON around
@@ -32,12 +33,12 @@ type ErrorResponse struct {
 
 func NewBaseHandler(userRepo models.UserRepository,
 	codeRepo models.CodeRepository,
-	tokensRepo models.TokensRepository,
+	tokenService *TokenService.Service,
 ) *BaseHandler {
 	return &BaseHandler{
-		userRepo:   userRepo,
-		codeRepo:   codeRepo,
-		tokensRepo: tokensRepo,
+		userRepo:     userRepo,
+		codeRepo:     codeRepo,
+		tokenService: tokenService,
 	}
 }
 
