@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/aerosystems/auth-service/pkg/normalizers"
 	"github.com/aerosystems/auth-service/pkg/validators"
 	"net/http"
 )
@@ -48,7 +49,7 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email := validators.NormalizeEmail(addr)
+	email := normalizers.NormalizeEmail(addr)
 
 	if err := validators.ValidatePassword(requestPayload.Password); err != nil {
 		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400006, "claim Password does not valid", err))

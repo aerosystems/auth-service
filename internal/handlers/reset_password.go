@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"github.com/aerosystems/auth-service/pkg/normalizers"
 	"github.com/aerosystems/auth-service/pkg/validators"
 	"gorm.io/gorm"
 	"net/http"
@@ -45,7 +46,7 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email := validators.NormalizeEmail(addr)
+	email := normalizers.NormalizeEmail(addr)
 
 	// Minimum of one small case letter
 	// Minimum of one upper case letter
@@ -84,7 +85,7 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	if code == nil {
 		// generating confirmation code
-		_, err = h.codeRepo.NewCode(user.ID, "registration", "")
+		_, err = h.codeRepo.NewCode(*user, "registration", "")
 		if err != nil {
 			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not gen new Code", err))
 			return
@@ -105,6 +106,6 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		nil,
 	)
 
-	_ = WriteResponse(w, http.StatusAccepted, payload)
+	_ = WriteResponse(w, http.StatusOK, payload)
 	return
 }

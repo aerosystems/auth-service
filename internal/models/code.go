@@ -5,12 +5,12 @@ import "time"
 type Code struct {
 	ID        int       `json:"id" gorm:"primaryKey;unique;autoIncrement"`
 	Code      int       `json:"code"`
-	UserID    int       `json:"user_id"`
-	CreatedAt time.Time `json:"created_at"`
-	ExpireAt  time.Time `json:"expire_at"`
+	User      User      `json:"userId" gorm:"foreignKey:UserID"`
+	CreatedAt time.Time `json:"createdAt"`
+	ExpireAt  time.Time `json:"expireAt"`
 	Action    string    `json:"action"`
 	Data      string    `json:"data"`
-	IsUsed    bool      `json:"is_used"`
+	IsUsed    bool      `json:"isUsed"`
 }
 
 type CodeRepository interface {
@@ -22,5 +22,5 @@ type CodeRepository interface {
 	GetByCode(Code int) (*Code, error)
 	GetLastIsActiveCode(UserID int, Action string) (*Code, error)
 	ExtendExpiration(code *Code) error
-	NewCode(UserID int, Action string, Data string) (*Code, error)
+	NewCode(User User, Action string, Data string) (*Code, error)
 }

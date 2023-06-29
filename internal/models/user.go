@@ -7,10 +7,10 @@ type User struct {
 	Email     string    `json:"email" gorm:"unique"`
 	Password  string    `json:"-"`
 	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	IsActive  bool      `json:"is_active"`
-	GoogleID  string    `json:"google_id"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	IsActive  bool      `json:"isActive"`
+	GoogleID  string    `json:"googleId"`
 }
 
 type UserRepository interface {

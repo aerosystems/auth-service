@@ -17,30 +17,6 @@ func ValidateEmail(data string) (string, error) {
 	return email.Address, nil
 }
 
-func NormalizeEmail(data string) string {
-	addr := strings.ToLower(data)
-
-	arrAddr := strings.Split(addr, "@")
-	username := arrAddr[0]
-	domain := arrAddr[1]
-
-	googleDomains := strings.Split(os.Getenv("GOOGLEMAIL_DOMAINS"), ",")
-
-	//checking Google mail aliases
-	if Contains(googleDomains, domain) {
-		//removing all dots from username mail
-		username = strings.ReplaceAll(username, ".", "")
-		//removing all characters after +
-		if strings.Contains(username, "+") {
-			res := strings.Split(username, "+")
-			username = res[0]
-		}
-		addr = username + "@gmail.com"
-	}
-
-	return addr
-}
-
 func ValidatePassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("password should be of 8 characters long")

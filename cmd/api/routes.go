@@ -29,10 +29,10 @@ func (app *Config) routes() http.Handler {
 			httpSwagger.URL("doc.json"), // The url pointing to API definition
 		))
 
-		mux.Post("/v1/login", app.BaseHandler.Login)
-		mux.Post("/v1/register", app.BaseHandler.Register)
-		mux.Post("/v1/confirm", app.BaseHandler.Confirm)
-		mux.Post("/v1/reset-password", app.BaseHandler.ResetPassword)
+		mux.Post("/v1/user/login", app.BaseHandler.Login)
+		mux.Post("/v1/user/register", app.BaseHandler.Register)
+		mux.Post("/v1/user/confirm-registration", app.BaseHandler.Confirm)
+		mux.Post("/v1/user/reset-password", app.BaseHandler.ResetPassword)
 		mux.Post("/v1/token/refresh", app.BaseHandler.RefreshToken)
 
 		// Private routes
@@ -48,7 +48,7 @@ func (app *Config) routes() http.Handler {
 
 			mux.Use(app.TokenAuthMiddleware)
 
-			mux.Post("/v1/logout", app.BaseHandler.Logout)
+			mux.Post("/v1/user/logout", app.BaseHandler.Logout)
 			mux.Get("/v1/token/validate", app.BaseHandler.ValidateToken)
 		})
 	})

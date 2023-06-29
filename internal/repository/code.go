@@ -91,7 +91,7 @@ func (r *CodeRepo) ExtendExpiration(code *models.Code) error {
 }
 
 // NewCode CreateCode generation new code
-func (r *CodeRepo) NewCode(UserID int, Action string, Data string) (*models.Code, error) {
+func (r *CodeRepo) NewCode(User models.User, Action string, Data string) (*models.Code, error) {
 	codeExpMinutes, err := strconv.Atoi(os.Getenv("CODE_EXP_MINUTES"))
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (r *CodeRepo) NewCode(UserID int, Action string, Data string) (*models.Code
 
 	code := models.Code{
 		Code:      helpers.GenCode(),
-		UserID:    UserID,
+		User:      User,
 		CreatedAt: time.Now(),
 		ExpireAt:  time.Now().Add(time.Minute * time.Duration(codeExpMinutes)),
 		Action:    Action,

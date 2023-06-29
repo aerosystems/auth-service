@@ -32,13 +32,13 @@ func (app *Config) TokenAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		tokenClaims, err := app.tokenService.DecodeAccessToken(*accessToken)
+		tokenClaims, err := app.TokenService.DecodeAccessToken(*accessToken)
 		if err != nil {
 			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(401005, "could not decode Access Token", err))
 			return
 		}
 
-		_, err = app.tokenService.GetCacheValue(tokenClaims.AccessUUID)
+		_, err = app.TokenService.GetCacheValue(tokenClaims.AccessUUID)
 		if err != nil {
 			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(401006, "could not get User data from storage", err))
 			return

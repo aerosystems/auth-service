@@ -48,12 +48,12 @@ func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if code.IsUsed {
-		err := fmt.Errorf("claim Code was used by user %d", code.UserID)
+		err := fmt.Errorf("claim Code was used by user %d", code.User.ID)
 		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404003, "claim Code was used", err))
 		return
 	}
 
-	user, err := h.userRepo.FindByID(code.UserID)
+	user, err := h.userRepo.FindByID(code.User.ID)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404004, "could not find User by Code", err))
 		return
