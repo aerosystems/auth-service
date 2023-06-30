@@ -7,13 +7,13 @@
 	},
 	"item": [
 		{
-			"name": "/v1/register",
+			"name": "/v1/user/register",
 			"request": {
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"111.qwerty+17@googlemail.com\",\n    \"password\": \"Qwerty12#\",\n    \"role\": \"startup\"\n}",
+					"raw": "{\n    \"email\": \"1.qwerty+17@googlemail.com\",\n    \"password\": \"Qwerty12#\",\n    \"role\": \"startup\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -21,7 +21,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/v1/register",
+					"raw": "http://localhost:8081/v1/user/register",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -29,6 +29,7 @@
 					"port": "8081",
 					"path": [
 						"v1",
+						"user",
 						"register"
 					],
 					"query": [
@@ -43,13 +44,13 @@
 			"response": []
 		},
 		{
-			"name": "/v1/confirm",
+			"name": "/v1/user/confirm-registration",
 			"request": {
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"code\": 461045\n}",
+					"raw": "{\n    \"code\": 909096\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -57,7 +58,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/v1/confirm",
+					"raw": "http://localhost:8081/v1/user/confirm-registration",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -65,7 +66,8 @@
 					"port": "8081",
 					"path": [
 						"v1",
-						"confirm"
+						"user",
+						"confirm-registration"
 					],
 					"query": [
 						{
@@ -79,13 +81,13 @@
 			"response": []
 		},
 		{
-			"name": "/v1/login",
+			"name": "/v1/user/login",
 			"request": {
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"111.qwerty+17@googlemail.com\",\n    \"password\": \"Qwerty12#\"\n}",
+					"raw": "{\n    \"email\": \"1112.qwerty+17@googlemail.com\",\n    \"password\": \"Qwerty12#\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -93,7 +95,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/v1/login",
+					"raw": "http://localhost:8081/v1/user/login",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -101,6 +103,7 @@
 					"port": "8081",
 					"path": [
 						"v1",
+						"user",
 						"login"
 					],
 					"query": [
@@ -115,7 +118,7 @@
 			"response": []
 		},
 		{
-			"name": "/v1/reset-password",
+			"name": "/v1/user/reset-password",
 			"request": {
 				"auth": {
 					"type": "noauth"
@@ -132,7 +135,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/v1/reset-password",
+					"raw": "http://localhost:8081/v1/user/reset-password",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -140,6 +143,7 @@
 					"port": "8081",
 					"path": [
 						"v1",
+						"user",
 						"reset-password"
 					],
 					"query": [
@@ -154,14 +158,14 @@
 			"response": []
 		},
 		{
-			"name": "/v1/logout",
+			"name": "/v1/user/logout",
 			"request": {
 				"auth": {
 					"type": "bearer",
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdXVpZCI6IjY3MWI5MzVjLWE1ZTgtNGMyNi1iYjU1LTkyNjRlZjgxODExMCIsImV4cCI6MTY3ODU2MTM4NCwidXNlcl9pZCI6MzF9.EUfyFTKl0zZgn4yDOxEhQaTiDf5FEqSgHDjUQyXsB3A",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdXVpZCI6IjZmYmJmMzc2LTc2MDItNDVkMS05NGU0LTBiYjEzZTJjZmIxNSIsImV4cCI6MTY3ODU3MjAyNSwidXNlcl9pZCI6MzF9.4WH_69aquUQit6tpGSlSfaM8fjDeFC7ITX7GnY2ASLQ",
 							"type": "string"
 						}
 					]
@@ -169,7 +173,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/v1/logout",
+					"raw": "http://localhost:8081/v1/user/logout",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -177,6 +181,7 @@
 					"port": "8081",
 					"path": [
 						"v1",
+						"user",
 						"logout"
 					],
 					"query": [
@@ -193,21 +198,11 @@
 		{
 			"name": "/v1/token/refresh",
 			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdXVpZCI6IjZlMzllNWMzLWI0ODUtNDE5Ny04NWIyLTgwZjQwMzYzNzYwZiIsImV4cCI6MTY3ODU2MTIzMSwidXNlcl9pZCI6MzF9.Xwu2QFkZD4KKi_eFHtulQRqyoef0d1SMN0M2mpzDMw0",
-							"type": "string"
-						}
-					]
-				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzkxNjUxMzEsInJlZnJlc2hfdXVpZCI6IjhmZDJhODJkLTM3N2EtNDVkYS1iNzI0LTNiYjA3MzNhZTAxZSIsInVzZXJfaWQiOjMxfQ.ih1SQUByC2SRNoxzi5qpXNwcFpMQ6aoArOnSTy06DtY\"\n}",
+					"raw": "{\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODg2ODM1ODksInJlZnJlc2hVdWlkIjoiM2FiZTdmODYtNDEyMS00ZGNjLThjZTItNjFkZDExYjgxMjVmIiwidXNlcklkIjozMn0.mbpaQLyRGE-XkA18d3CPJTw_WLrav8TtYFEmRe7OWeQ\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -256,13 +251,6 @@
 						"v1",
 						"token",
 						"validate"
-					],
-					"query": [
-						{
-							"key": "",
-							"value": null,
-							"disabled": true
-						}
 					]
 				}
 			},

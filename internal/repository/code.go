@@ -51,6 +51,14 @@ func (r *CodeRepo) Update(code *models.Code) error {
 	return nil
 }
 
+func (r *CodeRepo) UpdateWithAssociations(code *models.Code) error {
+	result := r.db.Session(&gorm.Session{FullSaveAssociations: true}).Save(&code)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
 func (r *CodeRepo) Delete(code *models.Code) error {
 	result := r.db.Delete(&code)
 	if result.Error != nil {
@@ -61,7 +69,7 @@ func (r *CodeRepo) Delete(code *models.Code) error {
 
 func (r *CodeRepo) GetByCode(Code int) (*models.Code, error) {
 	var code models.Code
-	result := r.db.Where("code = ?", Code).First(&code)
+	result := r.db.Preload("User").Where("code = ?", Code).First(&code)
 	if result.Error != nil {
 		return nil, result.Error
 	}

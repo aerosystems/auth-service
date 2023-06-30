@@ -1,4 +1,3 @@
-basePath: /v1
 definitions:
   handlers.CodeRequestBody:
     properties:
@@ -10,9 +9,7 @@ definitions:
     properties:
       code:
         type: integer
-      data: {}
-      error:
-        type: boolean
+      error: {}
       message:
         type: string
     type: object
@@ -55,8 +52,6 @@ definitions:
   handlers.Response:
     properties:
       data: {}
-      error:
-        type: boolean
       message:
         type: string
     type: object
@@ -69,20 +64,10 @@ definitions:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
         type: string
     type: object
-host: localhost:8080
 info:
-  contact:
-    name: Artem Kostenko
-    url: https://github.com/aerosystems
-  description: A mandatory part of any microservice infrastructure of a modern WEB
-    application
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: Auth Service
-  version: "1.0"
+  contact: {}
 paths:
-  /confirm:
+  /v1/user/confirm-registration:
     post:
       consumes:
       - application/json
@@ -108,6 +93,14 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+        "410":
+          description: Gone
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -115,7 +108,7 @@ paths:
       summary: confirm registration/reset password with 6-digit code from email/sms
       tags:
       - auth
-  /login:
+  /v1/user/login:
     post:
       consumes:
       - application/json
@@ -150,8 +143,16 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "500":
@@ -161,16 +162,10 @@ paths:
       summary: login user by credentials
       tags:
       - auth
-  /logout:
+  /v1/user/logout:
     post:
       consumes:
       - application/json
-      parameters:
-      - description: should contain Access Token, with the Bearer started
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -178,10 +173,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/handlers.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -190,10 +181,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: logout user
       tags:
       - auth
-  /register:
+  /v1/user/register:
     post:
       consumes:
       - application/json
@@ -212,7 +205,7 @@ paths:
         schema:
           $ref: '#/definitions/handlers.RegistrationRequestBody'
       produces:
-      - application/json l
+      - application/json
       responses:
         "200":
           description: OK
@@ -226,6 +219,14 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -233,7 +234,7 @@ paths:
       summary: registration user by credentials
       tags:
       - auth
-  /reset-password:
+  /v1/user/reset-password:
     post:
       consumes:
       - application/json
@@ -266,6 +267,10 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -273,7 +278,7 @@ paths:
       summary: resetting password
       tags:
       - auth
-  /token/refresh:
+  /v1/token/refresh:
     post:
       consumes:
       - application/json
@@ -284,11 +289,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/handlers.RefreshTokenRequestBody'
-      - description: should contain Access Token, with the Bearer started
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -309,6 +309,10 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -316,27 +320,23 @@ paths:
       summary: refresh a pair of JWT tokens
       tags:
       - auth
-  /token/validate:
+  /v1/token/validate:
     get:
       consumes:
       - application/json
-      parameters:
-      - description: should contain Access Token, with the Bearer started
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
           schema:
             $ref: '#/definitions/handlers.Response'
         "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: validate token
       tags:
       - auth

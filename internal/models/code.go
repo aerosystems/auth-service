@@ -1,11 +1,14 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Code struct {
 	ID        int       `json:"id" gorm:"primaryKey;unique;autoIncrement"`
 	Code      int       `json:"code"`
-	User      User      `json:"userId" gorm:"foreignKey:UserID"`
+	UserID    int       `json:"userId"`
+	User      User      `json:"user" gorm:"foreignKey:UserID"` // Relation to User [Belongs To Association]
 	CreatedAt time.Time `json:"createdAt"`
 	ExpireAt  time.Time `json:"expireAt"`
 	Action    string    `json:"action"`
@@ -18,6 +21,7 @@ type CodeRepository interface {
 	FindByID(ID int) (*Code, error)
 	Create(code *Code) error
 	Update(code *Code) error
+	UpdateWithAssociations(code *Code) error
 	Delete(code *Code) error
 	GetByCode(Code int) (*Code, error)
 	GetLastIsActiveCode(UserID int, Action string) (*Code, error)

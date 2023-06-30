@@ -1,22 +1,10 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "A mandatory part of any microservice infrastructure of a modern WEB application",
-        "title": "Auth Service",
-        "contact": {
-            "name": "Artem Kostenko",
-            "url": "https://github.com/aerosystems"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "1.0"
+        "contact": {}
     },
-    "host": "localhost:8080",
-    "basePath": "/v1",
     "paths": {
-        "/confirm": {
+        "/v1/user/confirm-registration": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -58,6 +46,18 @@
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -67,7 +67,7 @@
                 }
             }
         },
-        "/login": {
+        "/v1/user/login": {
             "post": {
                 "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length\nResponse contain pair JWT tokens, use /token/refresh for updating them",
                 "consumes": [
@@ -116,8 +116,20 @@
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -131,8 +143,13 @@
                 }
             }
         },
-        "/logout": {
+        "/v1/user/logout": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -143,26 +160,11 @@
                     "auth"
                 ],
                 "summary": "logout user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "should contain Access Token, with the Bearer started",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
@@ -180,14 +182,14 @@
                 }
             }
         },
-        "/register": {
+        "/v1/user/register": {
             "post": {
                 "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
-                    "application/json l"
+                    "application/json"
                 ],
                 "tags": [
                     "auth"
@@ -223,6 +225,18 @@
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -232,7 +246,7 @@
                 }
             }
         },
-        "/reset-password": {
+        "/v1/user/reset-password": {
             "post": {
                 "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length",
                 "consumes": [
@@ -275,6 +289,12 @@
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -284,7 +304,7 @@
                 }
             }
         },
-        "/token/refresh": {
+        "/v1/token/refresh": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -305,13 +325,6 @@
                         "schema": {
                             "$ref": "#/definitions/handlers.RefreshTokenRequestBody"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "should contain Access Token, with the Bearer started",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -345,6 +358,12 @@
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -354,8 +373,13 @@
                 }
             }
         },
-        "/token/validate": {
+        "/v1/token/validate": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -366,18 +390,9 @@
                     "auth"
                 ],
                 "summary": "validate token",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "should contain Access Token, with the Bearer started",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "204": {
+                        "description": "No Content",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response"
                         }
@@ -408,10 +423,7 @@
                 "code": {
                     "type": "integer"
                 },
-                "data": {},
-                "error": {
-                    "type": "boolean"
-                },
+                "error": {},
                 "message": {
                     "type": "string"
                 }
@@ -473,9 +485,6 @@
             "type": "object",
             "properties": {
                 "data": {},
-                "error": {
-                    "type": "boolean"
-                },
                 "message": {
                     "type": "string"
                 }

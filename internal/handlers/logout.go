@@ -13,12 +13,11 @@ import (
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param Authorization header string true "should contain Access Token, with the Bearer started"
+// @Security BearerAuth
 // @Success 200 {object} Response
-// @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /logout [post]
+// @Router /v1/user/logout [post]
 func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// receive AccessToken Claims from context middleware
 	accessTokenClaims, ok := r.Context().Value(helpers.ContextKey("accessTokenClaims")).(*TokenService.AccessTokenClaims)
@@ -30,7 +29,7 @@ func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	err := h.tokenService.DropCacheTokens(*accessTokenClaims)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not drop Access Token from storage", err))
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not drop Access Token", err))
 		return
 	}
 

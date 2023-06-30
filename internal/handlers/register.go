@@ -35,7 +35,7 @@ type RegistrationRequestBody struct {
 // @Failure 409 {object} ErrorResponse
 // @Failure 422 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /register [post]
+// @Router /v1/user/register [post]
 func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var requestPayload RegistrationRequestBody
 
@@ -45,20 +45,20 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := validators.ValidateRole(requestPayload.Role); err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400010, "Role does not valid", err))
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422010, "Role does not valid", err))
 		return
 	}
 
 	addr, err := validators.ValidateEmail(requestPayload.Email)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400005, "Email does not valid", err))
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422005, "Email does not valid", err))
 		return
 	}
 
 	email := normalizers.NormalizeEmail(addr)
 
 	if err := validators.ValidatePassword(requestPayload.Password); err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400006, "Password does not valid", err))
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422006, "Password does not valid", err))
 		return
 	}
 
@@ -66,7 +66,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userRepo.FindByEmail(email)
 	if err != nil && err != gorm.ErrRecordNotFound {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500007, "could not find User", err))
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "could not find User", err))
 		return
 	}
 
