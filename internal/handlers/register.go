@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/aerosystems/auth-service/pkg/normalizers"
+	"github.com/aerosystems/auth-service/pkg/validators"
 	"gorm.io/gorm"
 	"net/http"
 
-	"github.com/aerosystems/auth-service/internal/helpers"
 	"github.com/aerosystems/auth-service/internal/models"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -26,56 +27,53 @@ type RegistrationRequestBody struct {
 // @Description - minimum 8 characters length
 // @Tags auth
 // @Accept  json
-// @Produce application/json l
+// @Produce application/json
 // @Param registration body handlers.RegistrationRequestBody true "raw request body"
 // @Success 200 {object} Response
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
+// @Failure 409 {object} ErrorResponse
+// @Failure 422 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /register [post]
+// @Router /v1/user/register [post]
 func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var requestPayload RegistrationRequestBody
 
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400001, "request payload is incorrect", err))
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422001, "could not read request body", err))
 		return
 	}
 
-	if err := helpers.ValidateRole(requestPayload.Role); err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400010, "claim Role does not valid", err))
+	if err := validators.ValidateRole(requestPayload.Role); err != nil {
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422010, "Role does not valid", err))
 		return
 	}
 
-	addr, err := helpers.ValidateEmail(requestPayload.Email)
+	addr, err := validators.ValidateEmail(requestPayload.Email)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400005, "claim Email does not valid", err))
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422005, "Email does not valid", err))
 		return
 	}
 
-	email := helpers.NormalizeEmail(addr)
+	email := normalizers.NormalizeEmail(addr)
 
-	// Minimum of one small case letter
-	// Minimum of one upper case letter
-	// Minimum of one digit
-	// Minimum of one special character
-	// Minimum 8 characters length
-	if err := helpers.ValidatePassword(requestPayload.Password); err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400006, "claim Password does not valid", err))
+	if err := validators.ValidatePassword(requestPayload.Password); err != nil {
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422006, "Password does not valid", err))
 		return
 	}
 
 	var payload Response
 
-	//checking if email is existing
 	user, err := h.userRepo.FindByEmail(email)
 	if err != nil && err != gorm.ErrRecordNotFound {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500007, "could not get User from storage by Email", err))
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "could not find User", err))
 		return
 	}
+
 	if user != nil {
 		if user.IsActive {
 			err := fmt.Errorf("user with claim Email %s already exists", email)
-			_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400011, "user with claim Email already exists", err))
+			_ = WriteResponse(w, http.StatusConflict, NewErrorPayload(409011, "user already exists", err))
 			return
 		} else {
 			// updating password for inactive user
@@ -89,9 +87,9 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 			if code == nil {
 				// generating confirmation code
-				_, err = h.codeRepo.NewCode(user.ID, "registration", "")
+				_, err = h.codeRepo.NewCode(*user, "registration", "")
 				if err != nil {
-					_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not gen new Code", err))
+					_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not create new Code", err))
 					return
 				}
 			} else {
@@ -106,11 +104,11 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 			_ = code.Code
 
 			payload := NewResponsePayload(
-				fmt.Sprintf("updated User with Email: %s", requestPayload.Email),
+				fmt.Sprintf("User with Email %s was updated successfully", requestPayload.Email),
 				nil,
 			)
 
-			_ = WriteResponse(w, http.StatusAccepted, payload)
+			_ = WriteResponse(w, http.StatusOK, payload)
 			return
 		}
 	}
@@ -131,12 +129,12 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	err = h.userRepo.Create(&newUser)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500010, "could not to create new User", err))
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500010, "could not create new User", err))
 		return
 	}
 
 	// generating confirmation code
-	code, err := h.codeRepo.NewCode(newUser.ID, "registration", "")
+	code, err := h.codeRepo.NewCode(newUser, "registration", "")
 	if err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not gen new Code", err))
 		return
@@ -146,7 +144,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 	_ = code.Code
 
 	payload = *NewResponsePayload(
-		fmt.Sprintf("registered new User with Email %s", requestPayload.Email),
+		fmt.Sprintf("User with Email %s was registered successfully", requestPayload.Email),
 		nil,
 	)
 

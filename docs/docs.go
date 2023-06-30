@@ -22,7 +22,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/confirm": {
+        "/v1/user/confirm-registration": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -64,6 +64,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "410": {
+                        "description": "Gone",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -73,7 +85,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/login": {
+        "/v1/user/login": {
             "post": {
                 "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length\nResponse contain pair JWT tokens, use /token/refresh for updating them",
                 "consumes": [
@@ -122,8 +134,20 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -137,8 +161,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/logout": {
+        "/v1/user/logout": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -149,26 +178,11 @@ const docTemplate = `{
                     "auth"
                 ],
                 "summary": "logout user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "should contain Access Token, with the Bearer started",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
@@ -186,14 +200,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/register": {
+        "/v1/user/register": {
             "post": {
                 "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
-                    "application/json l"
+                    "application/json"
                 ],
                 "tags": [
                     "auth"
@@ -229,6 +243,18 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -238,7 +264,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/reset-password": {
+        "/v1/user/reset-password": {
             "post": {
                 "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length",
                 "consumes": [
@@ -281,6 +307,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -290,7 +322,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/token/refresh": {
+        "/v1/token/refresh": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -311,13 +343,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/handlers.RefreshTokenRequestBody"
                         }
-                    },
-                    {
-                        "type": "string",
-                        "description": "should contain Access Token, with the Bearer started",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -351,6 +376,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -360,8 +391,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/token/validate": {
+        "/v1/token/validate": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -372,18 +408,9 @@ const docTemplate = `{
                     "auth"
                 ],
                 "summary": "validate token",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "should contain Access Token, with the Bearer started",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "204": {
+                        "description": "No Content",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response"
                         }
@@ -414,10 +441,7 @@ const docTemplate = `{
                 "code": {
                     "type": "integer"
                 },
-                "data": {},
-                "error": {
-                    "type": "boolean"
-                },
+                "error": {},
                 "message": {
                     "type": "string"
                 }
@@ -479,9 +503,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "data": {},
-                "error": {
-                    "type": "boolean"
-                },
                 "message": {
                     "type": "string"
                 }
@@ -500,14 +521,22 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Should contain Access JWT Token, with the Bearer started",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/v1",
+	Version:          "1.0.5",
+	Host:             "localhost:8081",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Auth Service",
 	Description:      "A mandatory part of any microservice infrastructure of a modern WEB application",

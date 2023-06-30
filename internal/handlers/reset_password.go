@@ -3,7 +3,8 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/aerosystems/auth-service/internal/helpers"
+	"github.com/aerosystems/auth-service/pkg/normalizers"
+	"github.com/aerosystems/auth-service/pkg/validators"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -28,44 +29,40 @@ type ResetPasswordRequestBody struct {
 // @Success 200 {object} Response
 // @Failure 400 {object} ErrorResponse
 // @Failure 404 {object} ErrorResponse
+// @Failure 422 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /reset-password [post]
+// @Router /v1/user/reset-password [post]
 func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var requestPayload ResetPasswordRequestBody
 
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400001, "request payload is incorrect", err))
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422001, "could not read request body", err))
 		return
 	}
 
-	addr, err := helpers.ValidateEmail(requestPayload.Email)
+	addr, err := validators.ValidateEmail(requestPayload.Email)
 	if err != nil {
 		err = errors.New("email is not valid")
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400005, "claim Email does not valid", err))
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422005, "Email does not valid", err))
 		return
 	}
 
-	email := helpers.NormalizeEmail(addr)
+	email := normalizers.NormalizeEmail(addr)
 
-	// Minimum of one small case letter
-	// Minimum of one upper case letter
-	// Minimum of one digit
-	// Minimum of one special character
-	// Minimum 8 characters length
-	err = helpers.ValidatePassword(requestPayload.Password)
+	err = validators.ValidatePassword(requestPayload.Password)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400006, "claim Password does not valid", err))
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422006, "Password does not valid", err))
 		return
 	}
 
 	user, err := h.userRepo.FindByEmail(email)
 	if err != nil && err != gorm.ErrRecordNotFound {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500007, "could not get User from storage by Email", err))
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "could not find User", err))
 		return
 	}
 	if user == nil {
 		err := fmt.Errorf("user with claim Email %s does not exist", email)
-		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400014, "user with claim Email does not exist", err))
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404014, "user does not exist", err))
 		return
 	}
 
@@ -78,13 +75,13 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	code, err := h.codeRepo.GetLastIsActiveCode(user.ID, "registration")
 	if err != nil && err != gorm.ErrRecordNotFound {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(5000013, "could not get Code from storage", err))
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500013, "could not find Code", err))
 		return
 	}
 
 	if code == nil {
 		// generating confirmation code
-		_, err = h.codeRepo.NewCode(user.ID, "registration", "")
+		_, err = h.codeRepo.NewCode(*user, "registration", "")
 		if err != nil {
 			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not gen new Code", err))
 			return
@@ -101,10 +98,10 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	_ = code.Code
 
 	payload := NewResponsePayload(
-		fmt.Sprintf("resetted new passwoed for User with Email: %s", requestPayload.Email),
+		fmt.Sprintf("password was successfully reset for User with Email: %s", requestPayload.Email),
 		nil,
 	)
 
-	_ = WriteResponse(w, http.StatusAccepted, payload)
+	_ = WriteResponse(w, http.StatusOK, payload)
 	return
 }

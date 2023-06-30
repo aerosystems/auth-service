@@ -5,21 +5,15 @@ import (
 	"github.com/aerosystems/auth-service/internal/handlers"
 	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository"
-	"github.com/aerosystems/auth-service/pkg/mygorm"
-	"github.com/aerosystems/auth-service/pkg/myredis"
+	GormPostgres "github.com/aerosystems/auth-service/pkg/gorm_postgres"
+	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
+	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"log"
 	"net/http"
 )
 
-const webPort = "80"
-
-type Config struct {
-	BaseHandler *handlers.BaseHandler
-	TokensRepo  models.TokensRepository
-}
-
 // @title Auth Service
-// @version 1.0
+// @version 1.0.5
 // @description A mandatory part of any microservice infrastructure of a modern WEB application
 
 // @contact.name Artem Kostenko
@@ -28,29 +22,38 @@ type Config struct {
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8080
-// @BasePath /v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Should contain Access JWT Token, with the Bearer started
+
+// @host localhost:8081
+// @BasePath /
 func main() {
-	clientGORM := mygorm.NewClient()
-	clientREDIS := myredis.NewClient()
+	clientGORM := GormPostgres.NewClient()
+	clientGORM.AutoMigrate(models.User{}, models.Code{})
+	clientREDIS := RedisClient.NewClient()
+
 	userRepo := repository.NewUserRepo(clientGORM, clientREDIS)
 	codeRepo := repository.NewCodeRepo(clientGORM)
-	tokensRepo := repository.NewTokensRepo(clientREDIS)
+
+	tokenService := TokenService.NewService(clientREDIS)
 
 	app := Config{
+		WebPort: "80",
 		BaseHandler: handlers.NewBaseHandler(userRepo,
 			codeRepo,
-			tokensRepo,
+			tokenService,
 		),
-		TokensRepo: tokensRepo,
+		TokenService: tokenService,
 	}
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
+		Addr:    fmt.Sprintf(":%s", app.WebPort),
 		Handler: app.routes(),
 	}
 
-	log.Printf("Starting authentication end service on port %s\n", webPort)
+	log.Printf("Starting authentication end service on port %s\n", app.WebPort)
 	err := srv.ListenAndServe()
 
 	if err != nil {

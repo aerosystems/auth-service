@@ -4,40 +4,40 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/aerosystems/auth-service/internal/models"
+	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type BaseHandler struct {
-	userRepo   models.UserRepository
-	codeRepo   models.CodeRepository
-	tokensRepo models.TokensRepository
+	userRepo     models.UserRepository
+	codeRepo     models.CodeRepository
+	tokenService *TokenService.Service
 }
 
 // Response is the type used for sending JSON around
 type Response struct {
-	Error   bool   `json:"error"`
 	Message string `json:"message"`
 	Data    any    `json:"data,omitempty"`
 }
 
 // ErrorResponse is the type used for sending JSON around
 type ErrorResponse struct {
-	Error   bool   `json:"error"`
 	Code    int    `json:"code"`
 	Message string `json:"message"`
-	Data    any    `json:"data,omitempty"`
+	Error   any    `json:"error,omitempty"`
 }
 
 func NewBaseHandler(userRepo models.UserRepository,
 	codeRepo models.CodeRepository,
-	tokensRepo models.TokensRepository,
+	tokenService *TokenService.Service,
 ) *BaseHandler {
 	return &BaseHandler{
-		userRepo:   userRepo,
-		codeRepo:   codeRepo,
-		tokensRepo: tokensRepo,
+		userRepo:     userRepo,
+		codeRepo:     codeRepo,
+		tokenService: tokenService,
 	}
 }
 
@@ -85,24 +85,21 @@ func WriteResponse(w http.ResponseWriter, statusCode int, payload any, headers .
 
 func NewResponsePayload(message string, data interface{}) *Response {
 	return &Response{
-		Error:   false,
 		Message: message,
 		Data:    data,
 	}
 }
 
 func NewErrorPayload(code int, message string, err error) *ErrorResponse {
-	switch os.Getenv("APP_ENV") {
+	switch strings.ToUpper(os.Getenv("APP_ENV")) {
 	case "DEV":
 		return &ErrorResponse{
-			Error:   true,
 			Code:    code,
 			Message: message,
-			Data:    err.Error(),
+			Error:   err.Error(),
 		}
 	default:
 		return &ErrorResponse{
-			Error:   true,
 			Code:    code,
 			Message: message,
 		}
