@@ -77,7 +77,7 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a pair of JWT tokens
-	ts, err := h.tokenService.CreateToken(user.ID)
+	ts, err := h.tokenService.CreateToken(user.ID, user.Role)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not to create a pair of JWT Tokens", err))
 		return

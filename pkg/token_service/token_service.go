@@ -23,6 +23,7 @@ type TokenDetails struct {
 type AccessTokenClaims struct {
 	AccessUUID string `json:"accessUuid"`
 	UserID     int    `json:"userId"`
+	UserRole   string `json:"userRole"`
 	Exp        int    `json:"exp"`
 	jwt.StandardClaims
 }
@@ -30,6 +31,7 @@ type AccessTokenClaims struct {
 type RefreshTokenClaims struct {
 	RefreshUUID string `json:"refreshUuid"`
 	UserID      int    `json:"userId"`
+	UserRole    string `json:"userRole"`
 	Exp         int    `json:"exp"`
 	jwt.StandardClaims
 }
@@ -90,7 +92,7 @@ func (r *Service) GetCacheValue(UUID string) (*string, error) {
 }
 
 // CreateToken returns JWT Token
-func (r *Service) CreateToken(userid int) (*TokenDetails, error) {
+func (r *Service) CreateToken(userId int, userRole string) (*TokenDetails, error) {
 	td := &TokenDetails{}
 
 	accessExpMinutes, err := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))
@@ -111,7 +113,8 @@ func (r *Service) CreateToken(userid int) (*TokenDetails, error) {
 
 	atClaims := jwt.MapClaims{}
 	atClaims["accessUuid"] = td.AccessUuid.String()
-	atClaims["userId"] = userid
+	atClaims["userId"] = userId
+	atClaims["userRole"] = userRole
 	atClaims["exp"] = td.AtExpires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	td.AccessToken, err = at.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
@@ -121,7 +124,8 @@ func (r *Service) CreateToken(userid int) (*TokenDetails, error) {
 
 	rtClaims := jwt.MapClaims{}
 	rtClaims["refreshUuid"] = td.RefreshUuid.String()
-	rtClaims["userId"] = userid
+	rtClaims["userId"] = userId
+	rtClaims["userRole"] = userRole
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
 	td.RefreshToken, err = rt.SignedString([]byte(os.Getenv("REFRESH_SECRET")))
@@ -143,7 +147,7 @@ func (r *Service) DecodeRefreshToken(tokenString string) (*RefreshTokenClaims, e
 	}
 }
 
-func (r *Service) DecodeAccessToken(tokenString string) (*AccessTokenClaims, error) {
+func DecodeAccessToken(tokenString string) (*AccessTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("ACCESS_SECRET")), nil
 	})
