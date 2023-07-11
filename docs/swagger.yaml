@@ -1,0 +1,21 @@
+basePath: /
+host: localhost:8081
+info:
+  contact:
+    name: Artem Kostenko
+    url: https://github.com/aerosystems
+  description: A mandatory part of any microservice infrastructure of a modern WEB
+    application
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Auth Service
+  version: 1.0.5
+paths: {}
+securityDefinitions:
+  BearerAuth:
+    description: Should contain Access JWT Token, with the Bearer started
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

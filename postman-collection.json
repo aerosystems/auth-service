@@ -21,12 +21,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/v1/user/register",
-					"protocol": "http",
+					"raw": "{{BASE_URL_AUTH}}/v1/user/register",
 					"host": [
-						"localhost"
+						"{{BASE_URL_AUTH}}"
 					],
-					"port": "8081",
 					"path": [
 						"v1",
 						"user",
@@ -50,7 +48,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"code\": 909096\n}",
+					"raw": "{\n    \"code\": 284941\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -58,12 +56,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/v1/user/confirm-registration",
-					"protocol": "http",
+					"raw": "{{BASE_URL_AUTH}}/v1/user/confirm-registration",
 					"host": [
-						"localhost"
+						"{{BASE_URL_AUTH}}"
 					],
-					"port": "8081",
 					"path": [
 						"v1",
 						"user",
@@ -87,7 +83,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"1112.qwerty+17@googlemail.com\",\n    \"password\": \"Qwerty12#\"\n}",
+					"raw": "{\n    \"email\": \"1.qwerty+17@googlemail.com\",\n    \"password\": \"Qwerty12#\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -95,12 +91,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/v1/user/login",
-					"protocol": "http",
+					"raw": "{{BASE_URL_AUTH}}/v1/user/login",
 					"host": [
-						"localhost"
+						"{{BASE_URL_AUTH}}"
 					],
-					"port": "8081",
 					"path": [
 						"v1",
 						"user",
@@ -135,12 +129,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/v1/user/reset-password",
-					"protocol": "http",
+					"raw": "{{BASE_URL_AUTH}}/v1/user/reset-password",
 					"host": [
-						"localhost"
+						"{{BASE_URL_AUTH}}"
 					],
-					"port": "8081",
 					"path": [
 						"v1",
 						"user",
@@ -173,12 +165,10 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/v1/user/logout",
-					"protocol": "http",
+					"raw": "{{BASE_URL_AUTH}}/v1/user/logout",
 					"host": [
-						"localhost"
+						"{{BASE_URL_AUTH}}"
 					],
-					"port": "8081",
 					"path": [
 						"v1",
 						"user",
@@ -210,12 +200,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8081/v1/token/refresh",
-					"protocol": "http",
+					"raw": "{{BASE_URL_AUTH}}/v1/token/refresh",
 					"host": [
-						"localhost"
+						"{{BASE_URL_AUTH}}"
 					],
-					"port": "8081",
 					"path": [
 						"v1",
 						"token",
@@ -241,16 +229,31 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/v1/token/validate",
-					"protocol": "http",
+					"raw": "{{BASE_URL_AUTH}}/v1/token/validate",
 					"host": [
-						"localhost"
+						"{{BASE_URL_AUTH}}"
 					],
-					"port": "8081",
 					"path": [
 						"v1",
 						"token",
 						"validate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/ping",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{BASE_URL_AUTH}}/ping",
+					"host": [
+						"{{BASE_URL_AUTH}}"
+					],
+					"path": [
+						"ping"
 					]
 				}
 			},

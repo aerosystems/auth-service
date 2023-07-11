@@ -147,7 +147,7 @@ func (r *Service) DecodeRefreshToken(tokenString string) (*RefreshTokenClaims, e
 	}
 }
 
-func DecodeAccessToken(tokenString string) (*AccessTokenClaims, error) {
+func (r *Service) DecodeAccessToken(tokenString string) (*AccessTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(os.Getenv("ACCESS_SECRET")), nil
 	})

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/aerosystems/auth-service/internal/handlers"
 	"github.com/aerosystems/auth-service/internal/helpers"
-	TokenService "github.com/aerosystems/project-service/pkg/token_service"
 	"github.com/golang-jwt/jwt"
 	"net/http"
 	"os"
@@ -33,7 +32,7 @@ func (app *Config) TokenAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		tokenClaims, err := TokenService.DecodeAccessToken(*accessToken)
+		tokenClaims, err := app.TokenService.DecodeAccessToken(*accessToken)
 		if err != nil {
 			_ = handlers.WriteResponse(w, http.StatusUnauthorized, handlers.NewErrorPayload(401005, "could not decode Access Token", err))
 			return
