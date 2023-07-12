@@ -13,7 +13,7 @@ import (
 )
 
 // @title Auth Service
-// @version 1.0.5
+// @version 1.0.6
 // @description A mandatory part of any microservice infrastructure of a modern WEB application
 
 // @contact.name Artem Kostenko

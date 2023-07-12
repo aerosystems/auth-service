@@ -36,7 +36,7 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create pair JWT tokens
-	ts, err := h.tokenService.CreateToken(refreshTokenClaims.UserID)
+	ts, err := h.tokenService.CreateToken(refreshTokenClaims.UserID, refreshTokenClaims.UserRole)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not to create a pair of JWT Tokens", err))
 		return
