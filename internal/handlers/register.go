@@ -172,7 +172,7 @@ func sendEmailViaRPC(data RPCMailPayload) error {
 	}
 
 	var result string
-	err = client.Call("RPCMailServer.SendEmail", data, &result)
+	err = client.Call("MailServer.SendEmail", data, &result)
 	if err != nil {
 		return err
 	}
