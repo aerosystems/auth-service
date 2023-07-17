@@ -2,14 +2,12 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/pkg/normalizers"
 	"github.com/aerosystems/auth-service/pkg/validators"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
-	"net/rpc"
-
-	"github.com/aerosystems/auth-service/internal/models"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type RegistrationRequestBody struct {
@@ -147,14 +145,20 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := sendEmailViaRPC(RPCMailPayload{
-		To:      newUser.Email,
-		Subject: "Confirm your email🗯",
-		Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
-	}); err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))
-		return
-	}
+	// TODO Uncomment when mail service will be ready
+	_ = code.Code
+
+	// sending confirmation code via RPC
+	//var result string
+	//err = h.mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
+	//	To:      newUser.Email,
+	//	Subject: "Confirm your email🗯",
+	//	Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
+	//}, &result)
+	//if err != nil {
+	//	_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))
+	//	return
+	//}
 
 	payload = *NewResponsePayload(
 		fmt.Sprintf("User with Email %s was registered successfully", requestPayload.Email),
@@ -163,19 +167,4 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	_ = WriteResponse(w, http.StatusOK, payload)
 	return
-}
-
-func sendEmailViaRPC(data RPCMailPayload) error {
-	client, err := rpc.Dial("tcp", "mail-service:5001")
-	if err != nil {
-		return err
-	}
-
-	var result string
-	err = client.Call("MailServer.SendEmail", data, &result)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

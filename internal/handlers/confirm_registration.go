@@ -12,6 +12,12 @@ type CodeRequestBody struct {
 	Code int `json:"code" example:"123456"`
 }
 
+type RPCProjectPayload struct {
+	UserID     int
+	Name       string
+	AccessTime time.Time
+}
+
 // ConfirmRegistration godoc
 // @Summary confirm registration/reset password with 6-digit code from email/sms
 // @Tags auth
@@ -64,6 +70,26 @@ func (h *BaseHandler) ConfirmRegistration(w http.ResponseWriter, r *http.Request
 			"successfully confirmed registration User",
 			nil,
 		)
+		code.IsUsed = true
+		err = h.codeRepo.UpdateWithAssociations(code)
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "could not confirm registration", err))
+			return
+		}
+
+		// create default project via RPC
+		var result string
+		err = h.projectClientRPC.Call("ProjectServer.CreateProject", RPCProjectPayload{
+			UserID:     code.User.ID,
+			Name:       "default",
+			AccessTime: time.Now(),
+		}, &result)
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not create default project", err))
+			return
+		}
+
+		_ = WriteResponse(w, http.StatusOK, payload)
 	case "reset":
 		if !code.User.IsActive {
 			code.User.IsActive = true
@@ -74,15 +100,16 @@ func (h *BaseHandler) ConfirmRegistration(w http.ResponseWriter, r *http.Request
 			"successfully confirmed changing password User",
 			nil,
 		)
+
+		code.IsUsed = true
+		err = h.codeRepo.UpdateWithAssociations(code)
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "could not confirm registration", err))
+			return
+		}
+
+		_ = WriteResponse(w, http.StatusOK, payload)
 	}
 
-	code.IsUsed = true
-	err = h.codeRepo.UpdateWithAssociations(code)
-	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "could not confirm registration", err))
-		return
-	}
-
-	_ = WriteResponse(w, http.StatusOK, payload)
 	return
 }

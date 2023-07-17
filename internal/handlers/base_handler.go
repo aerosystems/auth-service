@@ -7,14 +7,17 @@ import (
 	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"io"
 	"net/http"
+	"net/rpc"
 	"os"
 	"strings"
 )
 
 type BaseHandler struct {
-	userRepo     models.UserRepository
-	codeRepo     models.CodeRepository
-	tokenService *TokenService.Service
+	userRepo         models.UserRepository
+	codeRepo         models.CodeRepository
+	tokenService     *TokenService.Service
+	projectClientRPC *rpc.Client
+	mailClientRPC    *rpc.Client
 }
 
 // Response is the type used for sending JSON around
@@ -33,11 +36,15 @@ type ErrorResponse struct {
 func NewBaseHandler(userRepo models.UserRepository,
 	codeRepo models.CodeRepository,
 	tokenService *TokenService.Service,
+	projectClientRPC *rpc.Client,
+	mailClientRPC *rpc.Client,
 ) *BaseHandler {
 	return &BaseHandler{
-		userRepo:     userRepo,
-		codeRepo:     codeRepo,
-		tokenService: tokenService,
+		userRepo:         userRepo,
+		codeRepo:         codeRepo,
+		tokenService:     tokenService,
+		projectClientRPC: projectClientRPC,
+		mailClientRPC:    mailClientRPC,
 	}
 }
 

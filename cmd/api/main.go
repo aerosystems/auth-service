@@ -10,7 +10,10 @@ import (
 	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"log"
 	"net/http"
+	"net/rpc"
 )
+
+const webPort = "80"
 
 // @title Auth Service
 // @version 1.0.6
@@ -39,22 +42,33 @@ func main() {
 
 	tokenService := TokenService.NewService(clientREDIS)
 
+	projectClientRPC, err := rpc.Dial("tcp", "project-service:5001")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mailClientRPC, err := rpc.Dial("tcp", "mail-service:5001")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	app := Config{
-		WebPort: "80",
 		BaseHandler: handlers.NewBaseHandler(userRepo,
 			codeRepo,
 			tokenService,
+			projectClientRPC,
+			mailClientRPC,
 		),
 		TokenService: tokenService,
 	}
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", app.WebPort),
+		Addr:    fmt.Sprintf(":%s", webPort),
 		Handler: app.routes(),
 	}
 
-	log.Printf("Starting authentication end service on port %s\n", app.WebPort)
-	err := srv.ListenAndServe()
+	log.Printf("starting auth-service HTTP Server on port %s\n", webPort)
+	err = srv.ListenAndServe()
 
 	if err != nil {
 		log.Panic(err)
