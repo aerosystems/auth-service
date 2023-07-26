@@ -1,5 +1,6 @@
 FROM alpine:latest
 RUN mkdir /app
+RUN mkdir /app/logs
 
 COPY ./auth-service/auth-service.bin /app
 
