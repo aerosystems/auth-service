@@ -94,14 +94,18 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO Send confirmation code
-	_ = code.Code
+	// sending confirmation code via RPC
+	var result string
+	err = h.mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
+		To:      user.Email,
+		Subject: "Reset your password🗯",
+		Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
+	}, &result)
+	if err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))
+		return
+	}
 
-	payload := NewResponsePayload(
-		fmt.Sprintf("password was successfully reset for User with Email: %s", requestPayload.Email),
-		nil,
-	)
-
-	_ = WriteResponse(w, http.StatusOK, payload)
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("password was successfully reset for User with Email: %s", requestPayload.Email), nil))
 	return
 }

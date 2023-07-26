@@ -54,8 +54,6 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: ts.RefreshToken,
 	}
 
-	payload := NewResponsePayload("tokens successfully refreshed", tokens)
-
-	_ = WriteResponse(w, http.StatusOK, payload)
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload("tokens successfully refreshed", tokens))
 	return
 }

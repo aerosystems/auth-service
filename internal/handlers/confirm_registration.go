@@ -14,6 +14,7 @@ type CodeRequestBody struct {
 
 type RPCProjectPayload struct {
 	UserID     int
+	UserRole   string
 	Name       string
 	AccessTime time.Time
 }
@@ -81,6 +82,7 @@ func (h *BaseHandler) ConfirmRegistration(w http.ResponseWriter, r *http.Request
 		var result string
 		err = h.projectClientRPC.Call("ProjectServer.CreateProject", RPCProjectPayload{
 			UserID:     code.User.ID,
+			UserRole:   code.User.Role,
 			Name:       "default",
 			AccessTime: time.Now(),
 		}, &result)

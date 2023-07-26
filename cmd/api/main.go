@@ -16,7 +16,7 @@ import (
 const webPort = "80"
 
 // @title Auth Service
-// @version 1.0.6
+// @version 1.0.7
 // @description A mandatory part of any microservice infrastructure of a modern WEB application
 
 // @contact.name Artem Kostenko

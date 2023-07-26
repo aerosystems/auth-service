@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"1.qwerty+17@googlemail.com\",\n    \"password\": \"Qwerty12#\",\n    \"role\": \"startup\"\n}",
+					"raw": "{\n    \"email\": \"test-5m1wqdx80@srv1.mail-tester.com\",\n    \"password\": \"Qwerty12#\",\n    \"role\": \"startup\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"

@@ -67,8 +67,6 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload Response
-
 	user, err := h.userRepo.FindByEmail(email)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "could not find User", err))
@@ -105,15 +103,19 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			// TODO Send confirmation code
-			_ = code.Code
+			// sending confirmation code via RPC
+			var result string
+			err = h.mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
+				To:      user.Email,
+				Subject: "Confirm your email🗯",
+				Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
+			}, &result)
+			if err != nil {
+				_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))
+				return
+			}
 
-			payload := NewResponsePayload(
-				fmt.Sprintf("User with Email %s was updated successfully", requestPayload.Email),
-				nil,
-			)
-
-			_ = WriteResponse(w, http.StatusOK, payload)
+			_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("User with Email %s was updated successfully", requestPayload.Email), nil))
 			return
 		}
 	}
@@ -145,26 +147,18 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO Uncomment when mail service will be ready
-	_ = code.Code
-
 	// sending confirmation code via RPC
-	//var result string
-	//err = h.mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
-	//	To:      newUser.Email,
-	//	Subject: "Confirm your email🗯",
-	//	Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
-	//}, &result)
-	//if err != nil {
-	//	_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))
-	//	return
-	//}
+	var result string
+	err = h.mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
+		To:      newUser.Email,
+		Subject: "Confirm your email🗯",
+		Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
+	}, &result)
+	if err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))
+		return
+	}
 
-	payload = *NewResponsePayload(
-		fmt.Sprintf("User with Email %s was registered successfully", requestPayload.Email),
-		nil,
-	)
-
-	_ = WriteResponse(w, http.StatusOK, payload)
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("User with Email %s was registered successfully", requestPayload.Email), nil))
 	return
 }

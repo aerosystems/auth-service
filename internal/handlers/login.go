@@ -94,8 +94,6 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: ts.RefreshToken,
 	}
 
-	payload := NewResponsePayload(fmt.Sprintf("logged in User %s successfully", requestPayload.Email), tokens)
-
-	_ = WriteResponse(w, http.StatusOK, payload)
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("logged in User %s successfully", requestPayload.Email), tokens))
 	return
 }
