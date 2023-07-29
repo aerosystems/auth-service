@@ -30,7 +30,7 @@ func NewLogger(filename string) *logger {
 	rotateFileHook, err := NewRotateFileHook(RotateFileConfig{
 		Filename:   fmt.Sprintf("/app/logs/%s.log", filename),
 		MaxSize:    50, // megabytes
-		MaxBackups: 3,  // amouts
+		MaxBackups: 3,  // amounts
 		MaxAge:     28, //days
 		Level:      logLevel,
 		Formatter: &logrus.JSONFormatter{

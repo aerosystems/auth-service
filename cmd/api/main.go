@@ -9,6 +9,7 @@ import (
 	"github.com/aerosystems/auth-service/pkg/logger"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
 	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/rpc"
 	"os"
@@ -36,8 +37,10 @@ const webPort = "80"
 func main() {
 	log := logger.NewLogger(os.Getenv("HOSTNAME"))
 
-	clientGORM := GormPostgres.NewClient()
+	clientGORM := GormPostgres.NewClient(logrus.NewEntry(log.Logger))
+
 	clientGORM.AutoMigrate(models.User{}, models.Code{})
+
 	clientREDIS := RedisClient.NewClient()
 
 	userRepo := repository.NewUserRepo(clientGORM, clientREDIS)
@@ -67,7 +70,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(),
+		Handler: app.routes(log.Logger),
 	}
 
 	log.Info("starting auth-service HTTP Server on port %s\n", webPort)
