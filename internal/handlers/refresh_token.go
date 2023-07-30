@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 )
 
 type RefreshTokenRequestBody struct {
-	RefreshToken string `json:"refresh_token" xml:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
+	RefreshToken string `json:"refreshToken" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
 }
 
 // RefreshToken godoc
@@ -14,7 +15,7 @@ type RefreshTokenRequestBody struct {
 // @Accept  json
 // @Produce application/json
 // @Param login body handlers.RefreshTokenRequestBody true "raw request body, should contain Refresh Token"
-// @Success 200 {object} Response{data=TokensResponseBody}
+// @Success 200 {object} Response{data=handlers.TokensResponseBody}
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Failure 422 {object} ErrorResponse
@@ -25,6 +26,12 @@ func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
 		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422001, "could not read request body", err))
+		return
+	}
+
+	if requestPayload.RefreshToken == "" {
+		err := errors.New("refresh Token does not exists or empty")
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422013, err.Error(), err))
 		return
 	}
 

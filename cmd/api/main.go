@@ -32,7 +32,8 @@ const webPort = "80"
 // @name Authorization
 // @description Should contain Access JWT Token, with the Bearer started
 
-// @host localhost:8081
+// @host gw.verifire.com/auth
+// @schemes https
 // @BasePath /
 func main() {
 	log := logger.NewLogger(os.Getenv("HOSTNAME"))

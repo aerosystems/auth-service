@@ -1,5 +1,5 @@
 basePath: /
-host: localhost:8081
+host: gw.verifire.com/auth
 info:
   contact:
     name: Artem Kostenko
@@ -12,6 +12,9 @@ info:
   title: Auth Service
   version: 1.0.7
 paths: {}
+schemes:
+- http
+- https
 securityDefinitions:
   BearerAuth:
     description: Should contain Access JWT Token, with the Bearer started

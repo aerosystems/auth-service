@@ -1,4 +1,8 @@
 {
+    "schemes": [
+        "http",
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
         "description": "A mandatory part of any microservice infrastructure of a modern WEB application",
@@ -13,7 +17,7 @@
         },
         "version": "1.0.7"
     },
-    "host": "localhost:8081",
+    "host": "gw.verifire.com/auth",
     "basePath": "/",
     "paths": {},
     "securityDefinitions": {
