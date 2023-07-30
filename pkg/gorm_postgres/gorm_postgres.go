@@ -4,7 +4,6 @@ import (
 	"github.com/sirupsen/logrus"
 	gorm "gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
 	"os"
 	"time"
 
@@ -27,19 +26,19 @@ func NewClient(e *logrus.Entry) *gorm.DB {
 			PrepareStmt:            true,
 		})
 		if err != nil {
-			log.Println("PostgreSQL not ready...")
+			e.Logger.Info("PostgreSQL not ready...")
 			count++
 		} else {
-			log.Println("Connected to database!")
+			e.Logger.Info("Connected to database!")
 			return db
 		}
 
 		if count > 10 {
-			log.Println(err)
+			e.Logger.Info(err)
 			return nil
 		}
 
-		log.Println("Backing off for two seconds...")
+		e.Logger.Info("Backing off for two seconds...")
 		time.Sleep(2 * time.Second)
 		continue
 	}
