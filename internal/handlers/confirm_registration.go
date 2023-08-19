@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/aerosystems/auth-service/pkg/validators"
 	"net/http"
+	"net/rpc"
 	"time"
 )
 
@@ -79,15 +80,20 @@ func (h *BaseHandler) ConfirmRegistration(w http.ResponseWriter, r *http.Request
 		}
 
 		// create default project via RPC
+		projectClientRPC, err := rpc.Dial("tcp", "project-service:5001")
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not create project", err))
+			return
+		}
 		var result string
-		err = h.projectClientRPC.Call("ProjectServer.CreateProject", RPCProjectPayload{
+		err = projectClientRPC.Call("ProjectServer.CreateProject", RPCProjectPayload{
 			UserID:     code.User.ID,
 			UserRole:   code.User.Role,
 			Name:       "default",
 			AccessTime: time.Now(),
 		}, &result)
 		if err != nil {
-			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not create default project", err))
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500004, "could not create default project", err))
 			return
 		}
 

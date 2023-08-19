@@ -11,7 +11,6 @@ import (
 	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"github.com/sirupsen/logrus"
 	"net/http"
-	"net/rpc"
 	"os"
 )
 
@@ -39,7 +38,6 @@ func main() {
 	log := logger.NewLogger(os.Getenv("HOSTNAME"))
 
 	clientGORM := GormPostgres.NewClient(logrus.NewEntry(log.Logger))
-
 	clientGORM.AutoMigrate(models.User{}, models.Code{})
 
 	clientREDIS := RedisClient.NewClient()
@@ -49,22 +47,12 @@ func main() {
 
 	tokenService := TokenService.NewService(clientREDIS)
 
-	projectClientRPC, err := rpc.Dial("tcp", "project-service:5001")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	mailClientRPC, err := rpc.Dial("tcp", "mail-service:5001")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	app := Config{
-		BaseHandler: handlers.NewBaseHandler(userRepo,
+		BaseHandler: handlers.NewBaseHandler(
+			log.Logger,
+			userRepo,
 			codeRepo,
 			tokenService,
-			projectClientRPC,
-			mailClientRPC,
 		),
 		TokenService: tokenService,
 	}
@@ -74,8 +62,8 @@ func main() {
 		Handler: app.routes(log.Logger),
 	}
 
-	log.Info("starting auth-service HTTP Server on port %s\n", webPort)
-	err = srv.ListenAndServe()
+	log.Infof("starting auth-service HTTP Server on port %s\n", webPort)
+	err := srv.ListenAndServe()
 
 	if err != nil {
 		log.Panic(err)

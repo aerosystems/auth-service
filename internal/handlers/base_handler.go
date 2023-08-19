@@ -5,19 +5,18 @@ import (
 	"errors"
 	"github.com/aerosystems/auth-service/internal/models"
 	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
-	"net/rpc"
 	"os"
 	"strings"
 )
 
 type BaseHandler struct {
-	userRepo         models.UserRepository
-	codeRepo         models.CodeRepository
-	tokenService     *TokenService.Service
-	projectClientRPC *rpc.Client
-	mailClientRPC    *rpc.Client
+	log          *logrus.Logger
+	userRepo     models.UserRepository
+	codeRepo     models.CodeRepository
+	tokenService *TokenService.Service
 }
 
 // Response is the type used for sending JSON around
@@ -38,18 +37,17 @@ type ErrorResponse struct {
 	Error   any    `json:"error,omitempty"`
 }
 
-func NewBaseHandler(userRepo models.UserRepository,
+func NewBaseHandler(
+	log *logrus.Logger,
+	userRepo models.UserRepository,
 	codeRepo models.CodeRepository,
 	tokenService *TokenService.Service,
-	projectClientRPC *rpc.Client,
-	mailClientRPC *rpc.Client,
 ) *BaseHandler {
 	return &BaseHandler{
-		userRepo:         userRepo,
-		codeRepo:         codeRepo,
-		tokenService:     tokenService,
-		projectClientRPC: projectClientRPC,
-		mailClientRPC:    mailClientRPC,
+		log:          log,
+		userRepo:     userRepo,
+		codeRepo:     codeRepo,
+		tokenService: tokenService,
 	}
 }
 
