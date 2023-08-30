@@ -9,7 +9,7 @@ import (
 
 // ValidateToken godoc
 // @Summary validate token
-// @Tags auth
+// @Tags api-gateway-special
 // @Accept  json
 // @Produce application/json
 // @Security BearerAuth

@@ -139,7 +139,7 @@ paths:
       - BearerAuth: []
       summary: validate token
       tags:
-      - auth
+      - api-gateway-special
   /v1/user/confirm-registration:
     post:
       consumes:

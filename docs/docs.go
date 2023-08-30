@@ -105,7 +105,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "api-gateway-special"
                 ],
                 "summary": "validate token",
                 "responses": {

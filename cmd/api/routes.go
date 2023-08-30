@@ -3,7 +3,6 @@ package main
 import (
 	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -16,15 +15,6 @@ import (
 func (app *Config) routes(log *logrus.Logger) http.Handler {
 	mux := chi.NewRouter()
 	mux.Use(logger.Logger("router", log))
-
-	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Content-Type"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
 
 	// Public routes
 	mux.Use(middleware.Heartbeat("/ping"))
