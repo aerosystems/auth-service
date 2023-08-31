@@ -10,7 +10,7 @@ import (
 )
 
 type CodeRequestBody struct {
-	Code int `json:"code" example:"123456"`
+	Code string `json:"code" example:"012345"`
 }
 
 type RPCProjectPayload struct {

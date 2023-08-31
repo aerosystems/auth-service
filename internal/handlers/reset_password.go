@@ -105,7 +105,7 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	err = mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
 		To:      user.Email,
 		Subject: "Reset your password🗯",
-		Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
+		Body:    fmt.Sprintf("Your confirmation code is %s", code.Code),
 	}, &result)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))

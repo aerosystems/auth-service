@@ -144,7 +144,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 				RPCMailPayload{
 					To:      user.Email,
 					Subject: "Confirm your email🗯",
-					Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
+					Body:    fmt.Sprintf("Your confirmation code is %s", code.Code),
 				}, &result); err != nil {
 				_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "Could not send email", err))
 				return
@@ -192,7 +192,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 	err = mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
 		To:      newUser.Email,
 		Subject: "Confirm your email🗯",
-		Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
+		Body:    fmt.Sprintf("Your confirmation code is %s", code.Code),
 	}, &result)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "Could not send email", err))

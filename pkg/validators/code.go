@@ -2,19 +2,17 @@ package validators
 
 import (
 	"errors"
+	"unicode"
 )
 
-func ValidateCode(code int) error {
-	count := 0
-	for code > 0 {
-		code = code / 10
-		count++
-		if count > 6 {
-			return errors.New("code must contain 6 digits")
-		}
+func ValidateCode(value string) error {
+	if len(value) != 6 {
+		return errors.New("code must be 6 digits")
 	}
-	if count != 6 {
-		return errors.New("code must contain 6 digits")
+	for _, char := range value {
+		if !unicode.IsDigit(char) {
+			return errors.New("code must be digits")
+		}
 	}
 	return nil
 }

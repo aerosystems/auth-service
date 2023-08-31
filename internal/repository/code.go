@@ -67,9 +67,9 @@ func (r *CodeRepo) Delete(code *models.Code) error {
 	return nil
 }
 
-func (r *CodeRepo) GetByCode(Code int) (*models.Code, error) {
+func (r *CodeRepo) GetByCode(value string) (*models.Code, error) {
 	var code models.Code
-	result := r.db.Preload("User").Where("code = ?", Code).First(&code)
+	result := r.db.Preload("User").Where("code = ?", value).First(&code)
 	if result.Error != nil {
 		return nil, result.Error
 	}

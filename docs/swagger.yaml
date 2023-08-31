@@ -3,8 +3,8 @@ definitions:
   handlers.CodeRequestBody:
     properties:
       code:
-        example: 123456
-        type: integer
+        example: "123456"
+        type: string
     type: object
   handlers.ErrorResponse:
     properties:

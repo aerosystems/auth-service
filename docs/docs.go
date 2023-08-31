@@ -430,8 +430,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "integer",
-                    "example": 123456
+                    "type": "string",
+                    "example": "123456"
                 }
             }
         },
