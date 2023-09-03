@@ -33,10 +33,6 @@ func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload := NewResponsePayload(
-		fmt.Sprintf("User %s successfully logged out", accessTokenClaims.AccessUUID),
-		accessTokenClaims,
-	)
-	_ = WriteResponse(w, http.StatusOK, payload)
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("User %s successfully logged out", accessTokenClaims.AccessUUID), accessTokenClaims))
 	return
 }

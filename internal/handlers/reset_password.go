@@ -7,6 +7,7 @@ import (
 	"github.com/aerosystems/auth-service/pkg/validators"
 	"gorm.io/gorm"
 	"net/http"
+	"net/rpc"
 )
 
 type ResetPasswordRequestBody struct {
@@ -56,7 +57,7 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.userRepo.FindByEmail(email)
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "could not find User", err))
 		return
 	}
@@ -74,7 +75,7 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code, err := h.codeRepo.GetLastIsActiveCode(user.ID, "registration")
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500013, "could not find Code", err))
 		return
 	}
@@ -94,14 +95,23 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// TODO Send confirmation code
-	_ = code.Code
+	// sending confirmation code via RPC
+	mailClientRPC, err := rpc.Dial("tcp", "mail-service:5001")
+	if err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500007, "could not send email", err))
+		return
+	}
+	var result string
+	err = mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
+		To:      user.Email,
+		Subject: "Reset your password🗯",
+		Body:    fmt.Sprintf("Your confirmation code is %s", code.Code),
+	}, &result)
+	if err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))
+		return
+	}
 
-	payload := NewResponsePayload(
-		fmt.Sprintf("password was successfully reset for User with Email: %s", requestPayload.Email),
-		nil,
-	)
-
-	_ = WriteResponse(w, http.StatusOK, payload)
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("password was successfully reset for User with Email: %s", requestPayload.Email), nil))
 	return
 }

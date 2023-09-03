@@ -1,15 +1,15 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
+	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/pkg/normalizers"
 	"github.com/aerosystems/auth-service/pkg/validators"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
 	"net/rpc"
-
-	"github.com/aerosystems/auth-service/internal/models"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type RegistrationRequestBody struct {
@@ -22,6 +22,11 @@ type RPCMailPayload struct {
 	To      string
 	Subject string
 	Body    string
+}
+
+type RPCInspectPayload struct {
+	Domain   string
+	ClientIp string
 }
 
 // Register godoc
@@ -47,7 +52,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var requestPayload RegistrationRequestBody
 
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
-		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422001, "could not read request body", err))
+		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422001, "Could not read request body", err))
 		return
 	}
 
@@ -69,24 +74,45 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload Response
+	// checking email in blacklist via RPC
+	if checkmailClientRPC, err := rpc.Dial("tcp", "checkmail-service:5001"); err == nil {
+		var result string
+		if err := checkmailClientRPC.Call(
+			"CheckmailServer.Inspect",
+			RPCInspectPayload{
+				Domain:   email,
+				ClientIp: r.RemoteAddr,
+			},
+			&result); err != nil {
+			_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400101, "Email address does not valid", err))
+			return
+		}
+
+		if result == "blacklist" {
+			err := fmt.Errorf("email address contains in blacklist")
+			_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(400102, "Email address contains in Blacklist", err))
+			return
+		}
+	} else {
+		h.log.Error(err)
+	}
 
 	user, err := h.userRepo.FindByEmail(email)
-	if err != nil && err != gorm.ErrRecordNotFound {
-		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "could not find User", err))
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "Could not find User", err))
 		return
 	}
 
 	if user != nil {
 		if user.IsActive {
 			err := fmt.Errorf("user with claim Email %s already exists", email)
-			_ = WriteResponse(w, http.StatusConflict, NewErrorPayload(409011, "user already exists", err))
+			_ = WriteResponse(w, http.StatusConflict, NewErrorPayload(409011, "User already exists", err))
 			return
 		} else {
 			// updating password for inactive user
 			err := h.userRepo.ResetPassword(user, requestPayload.Password)
 			if err != nil {
-				_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500005, "could not reset User password", err))
+				_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500005, "Could not reset User password", err))
 				return
 			}
 
@@ -96,26 +122,35 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 				// generating confirmation code
 				_, err = h.codeRepo.NewCode(*user, "registration", "")
 				if err != nil {
-					_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not create new Code", err))
+					_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "Could not create new Code", err))
 					return
 				}
 			} else {
 				// extend expiration code and return previous active code
 				if err = h.codeRepo.ExtendExpiration(code); err != nil {
-					_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500012, "could not extend expiration date Code", err))
+					_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500012, "Could not extend expiration date Code", err))
 					return
 				}
 			}
 
-			// TODO Send confirmation code
-			_ = code.Code
+			// sending confirmation code via RPC
+			mailClientRPC, err := rpc.Dial("tcp", "mail-service:5001")
+			if err != nil {
+				_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500007, "Could not send email", err))
+				return
+			}
+			var result string
+			if err := mailClientRPC.Call("MailServer.SendEmail",
+				RPCMailPayload{
+					To:      user.Email,
+					Subject: "Confirm your email🗯",
+					Body:    fmt.Sprintf("Your confirmation code is %s", code.Code),
+				}, &result); err != nil {
+				_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "Could not send email", err))
+				return
+			}
 
-			payload := NewResponsePayload(
-				fmt.Sprintf("User with Email %s was updated successfully", requestPayload.Email),
-				nil,
-			)
-
-			_ = WriteResponse(w, http.StatusOK, payload)
+			_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("User with Email %s was updated successfully", requestPayload.Email), nil))
 			return
 		}
 	}
@@ -123,7 +158,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 	// hashing password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestPayload.Password), 12)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500009, "could not create Password", err))
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500009, "Could not create Password", err))
 		return
 	}
 
@@ -136,46 +171,34 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	err = h.userRepo.Create(&newUser)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500010, "could not create new User", err))
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500010, "Could not create new User", err))
 		return
 	}
 
 	// generating confirmation code
 	code, err := h.codeRepo.NewCode(newUser, "registration", "")
 	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not gen new Code", err))
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "Could not gen new Code", err))
 		return
 	}
 
-	if err := sendEmailViaRPC(RPCMailPayload{
+	// sending confirmation code via RPC
+	mailClientRPC, err := rpc.Dial("tcp", "mail-service:5001")
+	if err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500007, "Could not send email", err))
+		return
+	}
+	var result string
+	err = mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
 		To:      newUser.Email,
 		Subject: "Confirm your email🗯",
-		Body:    fmt.Sprintf("Your confirmation code is %d", code.Code),
-	}); err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))
+		Body:    fmt.Sprintf("Your confirmation code is %s", code.Code),
+	}, &result)
+	if err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "Could not send email", err))
 		return
 	}
 
-	payload = *NewResponsePayload(
-		fmt.Sprintf("User with Email %s was registered successfully", requestPayload.Email),
-		nil,
-	)
-
-	_ = WriteResponse(w, http.StatusOK, payload)
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("User with Email %s was registered successfully", requestPayload.Email), nil))
 	return
-}
-
-func sendEmailViaRPC(data RPCMailPayload) error {
-	client, err := rpc.Dial("tcp", "mail-service:5001")
-	if err != nil {
-		return err
-	}
-
-	var result string
-	err = client.Call("MailServer.SendEmail", data, &result)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

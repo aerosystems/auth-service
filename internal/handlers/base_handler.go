@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/aerosystems/auth-service/internal/models"
 	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 )
 
 type BaseHandler struct {
+	log          *logrus.Logger
 	userRepo     models.UserRepository
 	codeRepo     models.CodeRepository
 	tokenService *TokenService.Service
@@ -23,6 +25,11 @@ type Response struct {
 	Data    any    `json:"data,omitempty"`
 }
 
+type TokensResponseBody struct {
+	AccessToken  string `json:"accessToken" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
+	RefreshToken string `json:"refreshToken" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
+}
+
 // ErrorResponse is the type used for sending JSON around
 type ErrorResponse struct {
 	Code    int    `json:"code"`
@@ -30,11 +37,14 @@ type ErrorResponse struct {
 	Error   any    `json:"error,omitempty"`
 }
 
-func NewBaseHandler(userRepo models.UserRepository,
+func NewBaseHandler(
+	log *logrus.Logger,
+	userRepo models.UserRepository,
 	codeRepo models.CodeRepository,
 	tokenService *TokenService.Service,
 ) *BaseHandler {
 	return &BaseHandler{
+		log:          log,
 		userRepo:     userRepo,
 		codeRepo:     codeRepo,
 		tokenService: tokenService,

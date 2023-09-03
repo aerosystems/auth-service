@@ -5,11 +5,19 @@ import (
 	"fmt"
 	"github.com/aerosystems/auth-service/pkg/validators"
 	"net/http"
+	"net/rpc"
 	"time"
 )
 
 type CodeRequestBody struct {
-	Code int `json:"code" example:"123456"`
+	Code string `json:"code" example:"012345"`
+}
+
+type RPCProjectPayload struct {
+	UserID     int
+	UserRole   string
+	Name       string
+	AccessTime time.Time
 }
 
 // ConfirmRegistration godoc
@@ -64,6 +72,32 @@ func (h *BaseHandler) ConfirmRegistration(w http.ResponseWriter, r *http.Request
 			"successfully confirmed registration User",
 			nil,
 		)
+		code.IsUsed = true
+		err = h.codeRepo.UpdateWithAssociations(code)
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "could not confirm registration", err))
+			return
+		}
+
+		// create default project via RPC
+		projectClientRPC, err := rpc.Dial("tcp", "project-service:5001")
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not create project", err))
+			return
+		}
+		var result string
+		err = projectClientRPC.Call("ProjectServer.CreateProject", RPCProjectPayload{
+			UserID:     code.User.ID,
+			UserRole:   code.User.Role,
+			Name:       "default",
+			AccessTime: time.Now(),
+		}, &result)
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500004, "could not create default project", err))
+			return
+		}
+
+		_ = WriteResponse(w, http.StatusOK, payload)
 	case "reset":
 		if !code.User.IsActive {
 			code.User.IsActive = true
@@ -74,15 +108,16 @@ func (h *BaseHandler) ConfirmRegistration(w http.ResponseWriter, r *http.Request
 			"successfully confirmed changing password User",
 			nil,
 		)
+
+		code.IsUsed = true
+		err = h.codeRepo.UpdateWithAssociations(code)
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "could not confirm registration", err))
+			return
+		}
+
+		_ = WriteResponse(w, http.StatusOK, payload)
 	}
 
-	code.IsUsed = true
-	err = h.codeRepo.UpdateWithAssociations(code)
-	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "could not confirm registration", err))
-		return
-	}
-
-	_ = WriteResponse(w, http.StatusOK, payload)
 	return
 }

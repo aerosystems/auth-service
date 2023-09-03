@@ -1,13 +1,22 @@
 package helpers
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
 
-func GenCode() int {
+func GenCode() string {
 	rand.Seed(time.Now().UnixNano())
-	min := 100000
-	max := 999999
-	return rand.Intn(max-min+1) + min
+	var availableNumbers [3]int
+	for i := 0; i < 3; i++ {
+		availableNumbers[i] = rand.Intn(9)
+	}
+	var code string
+	for i := 0; i < 6; i++ {
+		randNum := availableNumbers[rand.Intn(len(availableNumbers))]
+
+		code = fmt.Sprintf("%s%d", code, randNum)
+	}
+	return code
 }

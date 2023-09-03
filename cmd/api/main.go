@@ -6,14 +6,18 @@ import (
 	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository"
 	GormPostgres "github.com/aerosystems/auth-service/pkg/gorm_postgres"
+	"github.com/aerosystems/auth-service/pkg/logger"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
 	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
-	"log"
+	"github.com/sirupsen/logrus"
 	"net/http"
+	"os"
 )
 
+const webPort = "80"
+
 // @title Auth Service
-// @version 1.0.6
+// @version 1.0.7
 // @description A mandatory part of any microservice infrastructure of a modern WEB application
 
 // @contact.name Artem Kostenko
@@ -27,11 +31,15 @@ import (
 // @name Authorization
 // @description Should contain Access JWT Token, with the Bearer started
 
-// @host localhost:8081
+// @host gw.verifire.com/auth
+// @schemes https
 // @BasePath /
 func main() {
-	clientGORM := GormPostgres.NewClient()
+	log := logger.NewLogger(os.Getenv("HOSTNAME"))
+
+	clientGORM := GormPostgres.NewClient(logrus.NewEntry(log.Logger))
 	clientGORM.AutoMigrate(models.User{}, models.Code{})
+
 	clientREDIS := RedisClient.NewClient()
 
 	userRepo := repository.NewUserRepo(clientGORM, clientREDIS)
@@ -40,8 +48,9 @@ func main() {
 	tokenService := TokenService.NewService(clientREDIS)
 
 	app := Config{
-		WebPort: "80",
-		BaseHandler: handlers.NewBaseHandler(userRepo,
+		BaseHandler: handlers.NewBaseHandler(
+			log.Logger,
+			userRepo,
 			codeRepo,
 			tokenService,
 		),
@@ -49,11 +58,11 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", app.WebPort),
-		Handler: app.routes(),
+		Addr:    fmt.Sprintf(":%s", webPort),
+		Handler: app.routes(log.Logger),
 	}
 
-	log.Printf("Starting authentication end service on port %s\n", app.WebPort)
+	log.Infof("starting auth-service HTTP Server on port %s\n", webPort)
 	err := srv.ListenAndServe()
 
 	if err != nil {

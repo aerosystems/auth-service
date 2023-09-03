@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"1.qwerty+17@googlemail.com\",\n    \"password\": \"Qwerty12#\",\n    \"role\": \"startup\"\n}",
+					"raw": "{\n    \"email\": \"qwerty@gmail.com\",\n    \"password\": \"Qwerty12#\",\n    \"role\": \"startup\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -48,7 +48,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"code\": 284941\n}",
+					"raw": "{\n    \"code\": \"564656\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -79,11 +79,14 @@
 		{
 			"name": "/v1/user/login",
 			"request": {
+				"auth": {
+					"type": "noauth"
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"1.qwerty+17@googlemail.com\",\n    \"password\": \"Qwerty12#\"\n}",
+					"raw": "{\n    \"email\": \"qwerty@gmail.com\",\n    \"password\": \"Qwerty12#\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -99,13 +102,6 @@
 						"v1",
 						"user",
 						"login"
-					],
-					"query": [
-						{
-							"key": "",
-							"value": null,
-							"disabled": true
-						}
 					]
 				}
 			},
@@ -188,11 +184,14 @@
 		{
 			"name": "/v1/token/refresh",
 			"request": {
+				"auth": {
+					"type": "noauth"
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODg2ODM1ODksInJlZnJlc2hVdWlkIjoiM2FiZTdmODYtNDEyMS00ZGNjLThjZTItNjFkZDExYjgxMjVmIiwidXNlcklkIjozMn0.mbpaQLyRGE-XkA18d3CPJTw_WLrav8TtYFEmRe7OWeQ\"\n}",
+					"raw": "{\n    \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTI4MjYyNjgsInJlZnJlc2hVdWlkIjoiMWI2ODY0MWUtN2ViNS00ODdkLWEzODQtMmUwYzFlZDYwNjFlIiwidXNlcklkIjoyMiwidXNlclJvbGUiOiJhZG1pbiJ9.XuZQ2TnY2vIRP3xCXZP673kh_t1J9SP8QRYa78NQCiw\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -258,6 +257,36 @@
 				}
 			},
 			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{ACCESS_TOKEN}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }

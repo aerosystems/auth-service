@@ -1,8 +1,9 @@
 package main
 
 import (
+	logger "github.com/chi-middleware/logrus-logger"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 
@@ -11,17 +12,9 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func (app *Config) routes() http.Handler {
+func (app *Config) routes(log *logrus.Logger) http.Handler {
 	mux := chi.NewRouter()
-
-	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Content-Type"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
+	mux.Use(logger.Logger("router", log))
 
 	// Public routes
 	mux.Use(middleware.Heartbeat("/ping"))

@@ -12,11 +12,6 @@ type LoginRequestBody struct {
 	Password string `json:"password" example:"P@ssw0rd"`
 }
 
-type TokensResponseBody struct {
-	AccessToken  string `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
-	RefreshToken string `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
-}
-
 // Login godoc
 // @Summary login user by credentials
 // @Description Password should contain:
@@ -94,8 +89,6 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: ts.RefreshToken,
 	}
 
-	payload := NewResponsePayload(fmt.Sprintf("logged in User %s successfully", requestPayload.Email), tokens)
-
-	_ = WriteResponse(w, http.StatusOK, payload)
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("logged in User %s successfully", requestPayload.Email), tokens))
 	return
 }
