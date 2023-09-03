@@ -431,7 +431,7 @@ const docTemplate = `{
             "properties": {
                 "code": {
                     "type": "string",
-                    "example": "123456"
+                    "example": "012345"
                 }
             }
         },
