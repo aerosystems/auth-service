@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/aerosystems/auth-service/pkg/normalizers"
 	"github.com/aerosystems/auth-service/pkg/validators"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
 	"net/rpc"
@@ -56,43 +57,41 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestPayload.Password), 12)
+	if err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500006, "could not hash password", err))
+		return
+	}
+
 	user, err := h.userRepo.FindByEmail(email)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404014, "user does not exist", fmt.Errorf("user with claim Email %s does not exist: %v", email, err)))
+		return
+	}
+	if err != nil {
 		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "could not find User", err))
 		return
 	}
-	if user == nil {
-		err := fmt.Errorf("user with claim Email %s does not exist", email)
-		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404014, "user does not exist", err))
-		return
-	}
 
-	// updating password for inactive user
-	err = h.userRepo.ResetPassword(user, requestPayload.Password)
-	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500005, "could not reset User password", err))
-		return
-	}
-
-	code, err := h.codeRepo.GetLastIsActiveCode(user.ID, "registration")
+	code, err := h.codeRepo.GetLastIsActiveCode(user.ID, "reset_password")
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500013, "could not find Code", err))
 		return
 	}
 
-	if code == nil {
-		// generating confirmation code
-		_, err = h.codeRepo.NewCode(*user, "registration", "")
+	if code == nil || code.IsUsed {
+		_, err = h.codeRepo.NewCode(*user, "reset_password", string(hashedPassword))
 		if err != nil {
 			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not gen new Code", err))
 			return
 		}
-	} else {
-		// extend expiration code and return previous active code
-		if err = h.codeRepo.ExtendExpiration(code); err != nil {
-			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500012, "could not extend expiration date Code", err))
-			return
-		}
+	}
+
+	// extend expiration code and return previous active code
+	code.Data = string(hashedPassword)
+	if err = h.codeRepo.ExtendExpiration(code); err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500012, "could not extend expiration date Code", err))
+		return
 	}
 
 	// sending confirmation code via RPC

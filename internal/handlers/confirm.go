@@ -98,7 +98,7 @@ func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 		}
 
 		_ = WriteResponse(w, http.StatusOK, payload)
-	case "reset":
+	case "reset_password":
 		if !code.User.IsActive {
 			code.User.IsActive = true
 		}
