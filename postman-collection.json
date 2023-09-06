@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"qwerty@gmail.com\",\n    \"password\": \"Qwerty12#\",\n    \"role\": \"startup\"\n}",
+					"raw": "{\n    \"email\": \"qwerty1@gmail.com\",\n    \"password\": \"Qwerty12#\",\n    \"role\": \"startup\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -42,13 +42,13 @@
 			"response": []
 		},
 		{
-			"name": "/v1/user/confirm-registration",
+			"name": "/v1/user/confirm",
 			"request": {
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"code\": \"564656\"\n}",
+					"raw": "{\n    \"code\": \"254524\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -56,14 +56,14 @@
 					}
 				},
 				"url": {
-					"raw": "{{BASE_URL_AUTH}}/v1/user/confirm-registration",
+					"raw": "{{BASE_URL_AUTH}}/v1/user/confirm",
 					"host": [
 						"{{BASE_URL_AUTH}}"
 					],
 					"path": [
 						"v1",
 						"user",
-						"confirm-registration"
+						"confirm"
 					],
 					"query": [
 						{

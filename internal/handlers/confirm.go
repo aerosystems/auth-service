@@ -20,7 +20,7 @@ type RPCProjectPayload struct {
 	AccessTime time.Time
 }
 
-// ConfirmRegistration godoc
+// Confirm godoc
 // @Summary confirm registration/reset password with 6-digit code from email/sms
 // @Tags auth
 // @Accept  json
@@ -33,7 +33,7 @@ type RPCProjectPayload struct {
 // @Failure 422 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /v1/user/confirm-registration [post]
-func (h *BaseHandler) ConfirmRegistration(w http.ResponseWriter, r *http.Request) {
+func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	var requestPayload CodeRequestBody
 
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
@@ -53,7 +53,7 @@ func (h *BaseHandler) ConfirmRegistration(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if code.ExpireAt.Before(time.Now()) {
-		err := fmt.Errorf("code %d has expired at %s", code.Code, code.ExpireAt.String())
+		err := fmt.Errorf("code %s has expired at %s", code.Code, code.ExpireAt.String())
 		_ = WriteResponse(w, http.StatusGone, NewErrorPayload(410002, "Code has expired", err))
 		return
 	}

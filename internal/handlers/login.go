@@ -66,8 +66,15 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	valid, err := h.userRepo.PasswordMatches(user, requestPayload.Password)
-	if err != nil || !valid {
-		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(401009, "invalid credentials", err))
+	if err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(401009, "could not to check password", err))
+		return
+	}
+	if !valid {
+		if err == nil {
+			err = fmt.Errorf("user %d entered invalid password", user.ID)
+		}
+		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(401010, "invalid credentials", err))
 		return
 	}
 
