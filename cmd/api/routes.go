@@ -41,6 +41,7 @@ func (app *Config) routes(log *logrus.Logger) http.Handler {
 
 		mux.Post("/v1/user/logout", app.BaseHandler.Logout)
 		mux.Get("/v1/token/validate", app.BaseHandler.ValidateToken)
+		mux.Get("/v1/user", app.BaseHandler.GetUser)
 	})
 
 	return mux
