@@ -80,7 +80,7 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if code == nil || code.IsUsed {
-		_, err = h.codeRepo.NewCode(*user, "reset_password", string(hashedPassword))
+		_, err := h.codeRepo.NewCode(*user, "reset_password", string(hashedPassword))
 		if err != nil {
 			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not gen new Code", err))
 			return
@@ -89,7 +89,7 @@ func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	// extend expiration code and return previous active code
 	code.Data = string(hashedPassword)
-	if err = h.codeRepo.ExtendExpiration(code); err != nil {
+	if err := h.codeRepo.ExtendExpiration(code); err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500012, "could not extend expiration date Code", err))
 		return
 	}
