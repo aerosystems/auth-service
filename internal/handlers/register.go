@@ -18,13 +18,13 @@ type RegistrationRequestBody struct {
 	Role     string `json:"role" example:"startup"`
 }
 
-type RPCMailPayload struct {
+type MailRPCPayload struct {
 	To      string
 	Subject string
 	Body    string
 }
 
-type RPCInspectPayload struct {
+type InspectRPCPayload struct {
 	Domain   string
 	ClientIp string
 }
@@ -79,7 +79,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 		var result string
 		if err := checkmailClientRPC.Call(
 			"CheckmailServer.Inspect",
-			RPCInspectPayload{
+			InspectRPCPayload{
 				Domain:   email,
 				ClientIp: r.RemoteAddr,
 			},
@@ -141,7 +141,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 			}
 			var result string
 			if err := mailClientRPC.Call("MailServer.SendEmail",
-				RPCMailPayload{
+				MailRPCPayload{
 					To:      user.Email,
 					Subject: "Confirm your email🗯",
 					Body:    fmt.Sprintf("Your confirmation code is %s", code.Code),
@@ -189,7 +189,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var result string
-	err = mailClientRPC.Call("MailServer.SendEmail", RPCMailPayload{
+	err = mailClientRPC.Call("MailServer.SendEmail", MailRPCPayload{
 		To:      newUser.Email,
 		Subject: "Confirm your email🗯",
 		Body:    fmt.Sprintf("Your confirmation code is %s", code.Code),

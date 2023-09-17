@@ -13,7 +13,7 @@ type CodeRequestBody struct {
 	Code string `json:"code" example:"012345"`
 }
 
-type RPCProjectPayload struct {
+type CreateProjectRPCPayload struct {
 	UserID     int
 	UserRole   string
 	Name       string
@@ -86,7 +86,7 @@ func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var result string
-		err = projectClientRPC.Call("ProjectServer.CreateProject", RPCProjectPayload{
+		err = projectClientRPC.Call("ProjectServer.CreateProject", CreateProjectRPCPayload{
 			UserID:     code.User.ID,
 			UserRole:   code.User.Role,
 			Name:       "default",
