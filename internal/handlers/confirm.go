@@ -14,10 +14,9 @@ type CodeRequestBody struct {
 }
 
 type CreateProjectRPCPayload struct {
-	UserID     int
-	UserRole   string
-	Name       string
-	AccessTime time.Time
+	UserID   int
+	UserRole string
+	Name     string
 }
 
 // Confirm godoc
@@ -87,10 +86,9 @@ func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 		}
 		var result string
 		err = projectClientRPC.Call("ProjectServer.CreateProject", CreateProjectRPCPayload{
-			UserID:     code.User.ID,
-			UserRole:   code.User.Role,
-			Name:       "default",
-			AccessTime: time.Now(),
+			UserID:   code.User.ID,
+			UserRole: code.User.Role,
+			Name:     "default",
 		}, &result)
 		if err != nil {
 			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500004, "could not create default project", err))
