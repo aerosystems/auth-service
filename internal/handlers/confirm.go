@@ -19,6 +19,11 @@ type CreateProjectRPCPayload struct {
 	Name     string
 }
 
+type SubsRPCPayload struct {
+	UserId uint
+	Kind   string
+}
+
 // Confirm godoc
 // @Summary confirm registration/reset password with 6-digit code from email/sms
 // @Tags auth
@@ -84,14 +89,30 @@ func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not create project", err))
 			return
 		}
-		var result string
+		var resProject string
 		err = projectClientRPC.Call("ProjectServer.CreateProject", CreateProjectRPCPayload{
 			UserID:   code.User.ID,
 			UserRole: code.User.Role,
 			Name:     "default",
-		}, &result)
+		}, &resProject)
 		if err != nil {
 			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500004, "could not create default project", err))
+			return
+		}
+
+		// create default subscription via RPC
+		subscriptionClientRPC, err := rpc.Dial("tcp", "subs-service:5001")
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500005, "could not create subscription", err))
+			return
+		}
+		var resSub string
+		err = subscriptionClientRPC.Call("SubsServer.CreateFreeTrial", SubsRPCPayload{
+			UserId: uint(code.User.ID),
+			Kind:   "startup",
+		}, &resSub)
+		if err != nil {
+			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500006, "could not create default subscription", err))
 			return
 		}
 
