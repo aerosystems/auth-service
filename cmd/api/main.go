@@ -5,6 +5,7 @@ import (
 	"github.com/aerosystems/auth-service/internal/handlers"
 	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository"
+	"github.com/aerosystems/auth-service/internal/usecase"
 	GormPostgres "github.com/aerosystems/auth-service/pkg/gorm_postgres"
 	"github.com/aerosystems/auth-service/pkg/logger"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
@@ -45,6 +46,7 @@ func main() {
 	userRepo := repository.NewUserRepo(clientGORM, clientREDIS)
 	codeRepo := repository.NewCodeRepo(clientGORM)
 
+	userService := usecase.NewUserServiceImpl(userRepo, codeRepo)
 	tokenService := TokenService.NewService(clientREDIS)
 
 	app := Config{
@@ -53,6 +55,7 @@ func main() {
 			userRepo,
 			codeRepo,
 			tokenService,
+			userService,
 		),
 		TokenService: tokenService,
 	}

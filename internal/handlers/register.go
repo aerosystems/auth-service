@@ -15,7 +15,6 @@ import (
 type RegistrationRequestBody struct {
 	Email    string `json:"email" example:"example@gmail.com"`
 	Password string `json:"password" example:"P@ssw0rd"`
-	Role     string `json:"role" example:"startup"`
 }
 
 type MailRPCPayload struct {
@@ -53,11 +52,6 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
 		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422001, "Could not read request body", err))
-		return
-	}
-
-	if err := validators.ValidateRole(requestPayload.Role); err != nil {
-		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422010, "Role does not valid", err))
 		return
 	}
 
@@ -166,7 +160,7 @@ func (h *BaseHandler) Register(w http.ResponseWriter, r *http.Request) {
 	newUser := models.User{
 		Email:    email,
 		Password: string(hashedPassword),
-		Role:     requestPayload.Role,
+		Role:     "user",
 	}
 
 	err = h.userRepo.Create(&newUser)

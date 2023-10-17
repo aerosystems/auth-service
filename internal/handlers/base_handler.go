@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/aerosystems/auth-service/internal/models"
+	"github.com/aerosystems/auth-service/internal/usecase"
 	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -17,6 +18,23 @@ type BaseHandler struct {
 	userRepo     models.UserRepository
 	codeRepo     models.CodeRepository
 	tokenService *TokenService.Service
+	userService  usecase.UserService
+}
+
+func NewBaseHandler(
+	log *logrus.Logger,
+	userRepo models.UserRepository,
+	codeRepo models.CodeRepository,
+	tokenService *TokenService.Service,
+	userService usecase.UserService,
+) *BaseHandler {
+	return &BaseHandler{
+		log:          log,
+		userRepo:     userRepo,
+		codeRepo:     codeRepo,
+		tokenService: tokenService,
+		userService:  userService,
+	}
 }
 
 // Response is the type used for sending JSON around
@@ -35,20 +53,6 @@ type ErrorResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Error   any    `json:"error,omitempty"`
-}
-
-func NewBaseHandler(
-	log *logrus.Logger,
-	userRepo models.UserRepository,
-	codeRepo models.CodeRepository,
-	tokenService *TokenService.Service,
-) *BaseHandler {
-	return &BaseHandler{
-		log:          log,
-		userRepo:     userRepo,
-		codeRepo:     codeRepo,
-		tokenService: tokenService,
-	}
 }
 
 // ReadRequest tries to read the body of a request and converts it into JSON
