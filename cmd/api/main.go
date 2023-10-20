@@ -5,10 +5,12 @@ import (
 	"github.com/aerosystems/auth-service/internal/handlers"
 	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository"
-	"github.com/aerosystems/auth-service/internal/usecase"
+	RPCServices "github.com/aerosystems/auth-service/internal/rpc_services"
+	"github.com/aerosystems/auth-service/internal/services"
 	GormPostgres "github.com/aerosystems/auth-service/pkg/gorm_postgres"
 	"github.com/aerosystems/auth-service/pkg/logger"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
+	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -43,10 +45,16 @@ func main() {
 
 	clientREDIS := RedisClient.NewClient()
 
+	checkmailClientRPC := RPCClient.NewClient("tcp", "checkmail-service:5001")
+	checkmailRPC := RPCServices.NewCheckmailRPC(checkmailClientRPC)
+
+	mailClientRPC := RPCClient.NewClient("tcp", "mail-service:5001")
+	mailRPC := RPCServices.NewMailRPC(mailClientRPC)
+
 	userRepo := repository.NewUserRepo(clientGORM, clientREDIS)
 	codeRepo := repository.NewCodeRepo(clientGORM)
 
-	userService := usecase.NewUserServiceImpl(userRepo, codeRepo)
+	userService := services.NewUserServiceImpl(userRepo, codeRepo, checkmailRPC, mailRPC)
 	tokenService := TokenService.NewService(clientREDIS)
 
 	app := Config{

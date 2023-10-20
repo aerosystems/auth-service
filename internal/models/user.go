@@ -24,3 +24,7 @@ type UserRepository interface {
 	ResetPassword(user *User, password string) error
 	PasswordMatches(user *User, plainText string) (bool, error)
 }
+
+type UserService interface {
+	Register(email, password, clientIp string) error
+}
