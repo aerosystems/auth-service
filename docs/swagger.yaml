@@ -37,9 +37,6 @@ definitions:
       password:
         example: P@ssw0rd
         type: string
-      role:
-        example: startup
-        type: string
     type: object
   handlers.ResetPasswordRequestBody:
     properties:
@@ -140,7 +137,7 @@ paths:
       summary: validate token
       tags:
       - api-gateway-special
-  /v1/user/confirm-registration:
+  /v1/user/confirm:
     post:
       consumes:
       - application/json
@@ -280,8 +277,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/handlers.Response'
         "400":
@@ -334,10 +331,6 @@ paths:
             $ref: '#/definitions/handlers.Response'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "422":

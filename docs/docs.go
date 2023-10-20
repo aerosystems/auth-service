@@ -124,7 +124,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/user/confirm-registration": {
+        "/v1/user/confirm": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -327,8 +327,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response"
                         }
@@ -403,12 +403,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
@@ -479,10 +473,6 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "example": "P@ssw0rd"
-                },
-                "role": {
-                    "type": "string",
-                    "example": "startup"
                 }
             }
         },

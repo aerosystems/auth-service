@@ -24,7 +24,6 @@ func (h *BaseHandler) ValidateToken(w http.ResponseWriter, r *http.Request) {
 		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(401001, "could not get token claims from Access Token", err))
 		return
 	}
-
 	_ = WriteResponse(w, http.StatusNoContent, nil)
 	return
 }

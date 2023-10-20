@@ -4,24 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aerosystems/auth-service/pkg/validators"
+	"gorm.io/gorm"
 	"net/http"
-	"net/rpc"
 	"time"
 )
 
 type CodeRequestBody struct {
 	Code string `json:"code" example:"012345"`
-}
-
-type CreateProjectRPCPayload struct {
-	UserID   int
-	UserRole string
-	Name     string
-}
-
-type SubsRPCPayload struct {
-	UserId uint
-	Kind   string
 }
 
 // Confirm godoc
@@ -36,107 +25,41 @@ type SubsRPCPayload struct {
 // @Failure 410 {object} ErrorResponse
 // @Failure 422 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
-// @Router /v1/user/confirm-registration [post]
+// @Router /v1/user/confirm [post]
 func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	var requestPayload CodeRequestBody
-
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
 		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422001, "could not read request body", err))
 		return
 	}
-
 	if err := validators.ValidateCode(requestPayload.Code); err != nil {
-		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422004, "Code does not valid", err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(422004, "code does not valid", err))
 		return
 	}
-
 	code, err := h.codeRepo.GetByCode(requestPayload.Code)
 	if err != nil {
-		err = errors.New("code is not found in storage")
-		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404001, "Code does not exist", err))
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404001, "code does not exist", err))
+			return
+		}
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500001, "could not get code", err))
 		return
 	}
 	if code.ExpireAt.Before(time.Now()) {
 		err := fmt.Errorf("code %s has expired at %s", code.Code, code.ExpireAt.String())
-		_ = WriteResponse(w, http.StatusGone, NewErrorPayload(410002, "Code has expired", err))
+		_ = WriteResponse(w, http.StatusGone, NewErrorPayload(410002, "code has expired", err))
 		return
 	}
 	if code.IsUsed {
 		err := fmt.Errorf("code was used by user %d", code.User.ID)
-		_ = WriteResponse(w, http.StatusGone, NewErrorPayload(410003, "Code was used", err))
+		_ = WriteResponse(w, http.StatusGone, NewErrorPayload(410003, "code was used", err))
+		return
+	}
+	if err := h.userService.Confirm(code); err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500001, "could not confirm code", err))
 		return
 	}
 
-	var payload *Response
-
-	switch code.Action {
-	case "registration":
-		code.User.IsActive = true
-		payload = NewResponsePayload(
-			"successfully confirmed registration User",
-			nil,
-		)
-		code.IsUsed = true
-		err = h.codeRepo.UpdateWithAssociations(code)
-		if err != nil {
-			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "could not confirm registration", err))
-			return
-		}
-
-		// create default project via RPC
-		projectClientRPC, err := rpc.Dial("tcp", "project-service:5001")
-		if err != nil {
-			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not create project", err))
-			return
-		}
-		var resProject string
-		err = projectClientRPC.Call("ProjectServer.CreateProject", CreateProjectRPCPayload{
-			UserID:   code.User.ID,
-			UserRole: code.User.Role,
-			Name:     "default",
-		}, &resProject)
-		if err != nil {
-			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500004, "could not create default project", err))
-			return
-		}
-
-		// create default subscription via RPC
-		subscriptionClientRPC, err := rpc.Dial("tcp", "subs-service:5001")
-		if err != nil {
-			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500005, "could not create subscription", err))
-			return
-		}
-		var resSub string
-		err = subscriptionClientRPC.Call("SubsServer.CreateFreeTrial", SubsRPCPayload{
-			UserId: uint(code.User.ID),
-			Kind:   "startup",
-		}, &resSub)
-		if err != nil {
-			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500006, "could not create default subscription", err))
-			return
-		}
-
-		_ = WriteResponse(w, http.StatusOK, payload)
-	case "reset_password":
-		if !code.User.IsActive {
-			code.User.IsActive = true
-		}
-		code.User.Password = code.Data
-
-		payload = NewResponsePayload(
-			"successfully confirmed changing password User",
-			nil,
-		)
-
-		code.IsUsed = true
-		err = h.codeRepo.UpdateWithAssociations(code)
-		if err != nil {
-			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "could not confirm registration", err))
-			return
-		}
-
-		_ = WriteResponse(w, http.StatusOK, payload)
-	}
-
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload("code was confirmed successfully", nil))
 	return
 }

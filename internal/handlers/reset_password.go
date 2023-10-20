@@ -2,13 +2,9 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"github.com/aerosystems/auth-service/pkg/normalizers"
 	"github.com/aerosystems/auth-service/pkg/validators"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"net/http"
-	"net/rpc"
 )
 
 type ResetPasswordRequestBody struct {
@@ -30,87 +26,31 @@ type ResetPasswordRequestBody struct {
 // @Param registration body handlers.ResetPasswordRequestBody true "raw request body"
 // @Success 200 {object} Response
 // @Failure 400 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
 // @Failure 422 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /v1/user/reset-password [post]
 func (h *BaseHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var requestPayload ResetPasswordRequestBody
-
 	if err := ReadRequest(w, r, &requestPayload); err != nil {
 		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422001, "could not read request body", err))
 		return
 	}
-
 	addr, err := validators.ValidateEmail(requestPayload.Email)
 	if err != nil {
 		err = errors.New("email is not valid")
-		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422005, "Email does not valid", err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(422005, "Email does not valid", err))
 		return
 	}
-
 	email := normalizers.NormalizeEmail(addr)
-
 	err = validators.ValidatePassword(requestPayload.Password)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422006, "Password does not valid", err))
+		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(422006, "Password does not valid", err))
 		return
 	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestPayload.Password), 12)
-	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500006, "could not hash password", err))
+	if err := h.userService.ResetPassword(email, requestPayload.Password); err != nil {
+		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500001, "could not reset password", err))
 		return
 	}
-
-	user, err := h.userRepo.FindByEmail(email)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404014, "user does not exist", fmt.Errorf("user with claim Email %s does not exist: %v", email, err)))
-		return
-	}
-	if err != nil {
-		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "could not find User", err))
-		return
-	}
-
-	code, err := h.codeRepo.GetLastIsActiveCode(user.ID, "reset_password")
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500013, "could not find Code", err))
-		return
-	}
-
-	if code == nil || code.IsUsed {
-		_, err := h.codeRepo.NewCode(*user, "reset_password", string(hashedPassword))
-		if err != nil {
-			_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not gen new Code", err))
-			return
-		}
-	}
-
-	// extend expiration code and return previous active code
-	code.Data = string(hashedPassword)
-	if err := h.codeRepo.ExtendExpiration(code); err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500012, "could not extend expiration date Code", err))
-		return
-	}
-
-	// sending confirmation code via RPC
-	mailClientRPC, err := rpc.Dial("tcp", "mail-service:5001")
-	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500007, "could not send email", err))
-		return
-	}
-	var result string
-	err = mailClientRPC.Call("MailServer.SendEmail", MailRPCPayload{
-		To:      user.Email,
-		Subject: "Reset your password🗯",
-		Body:    fmt.Sprintf("Your confirmation code is %s", code.Code),
-	}, &result)
-	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500008, "could not send email", err))
-		return
-	}
-
-	_ = WriteResponse(w, http.StatusOK, NewResponsePayload(fmt.Sprintf("password was successfully reset for User with Email: %s", requestPayload.Email), nil))
+	_ = WriteResponse(w, http.StatusOK, NewResponsePayload("password was successfully reset", nil))
 	return
 }

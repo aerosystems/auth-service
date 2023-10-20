@@ -27,4 +27,6 @@ type UserRepository interface {
 
 type UserService interface {
 	Register(email, password, clientIp string) error
+	Confirm(code *Code) error
+	ResetPassword(email, password string) error
 }
