@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aerosystems/auth-service/internal/helpers"
-	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
+	"github.com/aerosystems/auth-service/internal/services"
 	"net/http"
 )
 
@@ -20,7 +20,7 @@ import (
 // @Router /v1/user/logout [post]
 func (h *BaseHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	// receive AccessToken Claims from context middleware
-	accessTokenClaims, ok := r.Context().Value(helpers.ContextKey("accessTokenClaims")).(*TokenService.AccessTokenClaims)
+	accessTokenClaims, ok := r.Context().Value(helpers.ContextKey("accessTokenClaims")).(*services.AccessTokenClaims)
 	if !ok {
 		err := errors.New("could not get token claims from Access Token")
 		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(401001, "could not get token claims from Access Token", err))

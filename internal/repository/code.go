@@ -26,9 +26,9 @@ func (r *CodeRepo) FindAll() (*[]models.Code, error) {
 	return &codes, nil
 }
 
-func (r *CodeRepo) FindByID(ID int) (*models.Code, error) {
+func (r *CodeRepo) FindById(Id uint) (*models.Code, error) {
 	var code models.Code
-	result := r.db.Find(&code, ID)
+	result := r.db.Find(&code, Id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -76,7 +76,7 @@ func (r *CodeRepo) GetByCode(value string) (*models.Code, error) {
 	return &code, nil
 }
 
-func (r *CodeRepo) GetLastIsActiveCode(UserID int, Action string) (*models.Code, error) {
+func (r *CodeRepo) GetLastIsActiveCode(UserID uint, Action string) (*models.Code, error) {
 	var code models.Code
 	result := r.db.Where("user_id = ? AND action = ?", UserID, Action).First(&code)
 	if result.Error != nil {
@@ -99,7 +99,7 @@ func (r *CodeRepo) ExtendExpiration(code *models.Code) error {
 }
 
 // NewCode CreateCode generation new code
-func (r *CodeRepo) NewCode(User models.User, Action string, Data string) (*models.Code, error) {
+func (r *CodeRepo) NewCode(UserId uint, Action string, Data string) (*models.Code, error) {
 	codeExpMinutes, err := strconv.Atoi(os.Getenv("CODE_EXP_MINUTES"))
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (r *CodeRepo) NewCode(User models.User, Action string, Data string) (*model
 
 	code := models.Code{
 		Code:      helpers.GenCode(),
-		User:      User,
+		UserId:    UserId,
 		CreatedAt: time.Now(),
 		ExpireAt:  time.Now().Add(time.Minute * time.Duration(codeExpMinutes)),
 		Action:    Action,

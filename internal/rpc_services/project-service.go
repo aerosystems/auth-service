@@ -5,7 +5,7 @@ import (
 )
 
 type ProjectService interface {
-	CreateDefaultProject(userId int) error
+	CreateDefaultProject(userId uint) error
 }
 
 type ProjectRPC struct {
@@ -19,11 +19,11 @@ func NewProjectRPC(rpcClient *rpc.Client) *ProjectRPC {
 }
 
 type CreateProjectRPCPayload struct {
-	UserId int
+	UserId uint
 	Name   string
 }
 
-func (ps *ProjectRPC) CreateDefaultProject(userId int) error {
+func (ps *ProjectRPC) CreateDefaultProject(userId uint) error {
 	var result string
 	if err := ps.rpcClient.Call("ProjectServer.CreateProject", CreateProjectRPCPayload{
 		UserId: userId,

@@ -5,51 +5,59 @@ import (
 	"fmt"
 	"github.com/aerosystems/auth-service/internal/models"
 	RPCServices "github.com/aerosystems/auth-service/internal/rpc_services"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"log"
 )
 
+type UserService interface {
+	Register(email, password, clientIp string) error
+	Confirm(code *models.Code) error
+	ResetPassword(email, password string) error
+}
+
 type UserServiceImpl struct {
-	userRepo        models.UserRepository
 	codeRepo        models.CodeRepository
 	checkmailRPC    *RPCServices.CheckmailRPC
 	mailRPC         *RPCServices.MailRPC
 	projectRPC      *RPCServices.ProjectRPC
 	subscriptionRPC *RPCServices.SubscriptionRPC
+	userRPC         *RPCServices.UserRPC
 }
 
-func NewUserServiceImpl(userRepo models.UserRepository, codeRepo models.CodeRepository, checkmailRPC *RPCServices.CheckmailRPC, mailRPC *RPCServices.MailRPC, projectRPC *RPCServices.ProjectRPC, subscriptionRPC *RPCServices.SubscriptionRPC) *UserServiceImpl {
+func NewUserServiceImpl(codeRepo models.CodeRepository, checkmailRPC *RPCServices.CheckmailRPC, mailRPC *RPCServices.MailRPC, projectRPC *RPCServices.ProjectRPC, subscriptionRPC *RPCServices.SubscriptionRPC, userRPC *RPCServices.UserRPC) *UserServiceImpl {
 	return &UserServiceImpl{
-		userRepo:        userRepo,
 		codeRepo:        codeRepo,
 		checkmailRPC:    checkmailRPC,
 		mailRPC:         mailRPC,
 		projectRPC:      projectRPC,
 		subscriptionRPC: subscriptionRPC,
+		userRPC:         userRPC,
 	}
 }
 
 func (us *UserServiceImpl) Register(email, password, clientIp string) error {
+	// checking email in blacklist via RPC
 	if _, err := us.checkmailRPC.IsTrustEmail(email, clientIp); err != nil {
 		log.Println(err)
 	}
-	user, err := us.userRepo.FindByEmail(email)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return errors.New("could not find user by email")
+	// getting user by email via RPC
+	user, err := us.userRPC.GetUserByEmail(email)
+	if err != nil {
+		return errors.New("could not get user")
 	}
+	// if user with this email already exists
 	if user != nil {
 		if user.IsActive {
 			return errors.New("user with this email already exists")
 		} else {
 			// updating password for inactive user
-			if err := us.userRepo.ResetPassword(user, password); err != nil {
-				return errors.New("could not update password for inactive user")
+			if err := us.userRPC.ResetPassword(user.UserId, password); err != nil {
+				return errors.New("could not update password")
 			}
-			code, _ := us.codeRepo.GetLastIsActiveCode(user.ID, "registration")
+			code, _ := us.codeRepo.GetLastIsActiveCode(user.UserId, "registration")
 			if code == nil {
 				// generating confirmation code
-				if _, err = us.codeRepo.NewCode(*user, "registration", ""); err != nil {
+				if _, err = us.codeRepo.NewCode(user.UserId, "registration", ""); err != nil {
 					return errors.New("could not gen new code")
 				}
 			} else {
@@ -59,33 +67,24 @@ func (us *UserServiceImpl) Register(email, password, clientIp string) error {
 				}
 			}
 			// sending confirmation code via RPC
-			if err := us.mailRPC.SendMail(user.Email, "Confirm your email🗯", fmt.Sprintf("Your confirmation code is %s", code.Code)); err != nil {
+			if err := us.mailRPC.SendMail(email, "Confirm your email🗯", fmt.Sprintf("Your confirmation code is %s", code.Code)); err != nil {
 				return errors.New("could not send email")
 			}
 			return nil
 		}
 	}
-	// hashing password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	// creating new user via RPC
+	userId, err := us.userRPC.CreateUser(email, password)
 	if err != nil {
-		return errors.New("could not hash password")
-	}
-	// creating new inactive user
-	newUser := models.User{
-		Email:    email,
-		Password: string(hashedPassword),
-		Role:     "user",
-	}
-	if err = us.userRepo.Create(&newUser); err != nil {
 		return errors.New("could not create new user")
 	}
 	// generating confirmation code
-	code, err := us.codeRepo.NewCode(newUser, "registration", "")
+	code, err := us.codeRepo.NewCode(userId, "registration", "")
 	if err != nil {
 		return errors.New("could not gen new code")
 	}
 	// sending confirmation code via RPC
-	if err := us.mailRPC.SendMail(newUser.Email, "Confirm your email🗯", fmt.Sprintf("Your confirmation code is %s", code.Code)); err != nil {
+	if err := us.mailRPC.SendMail(email, "Confirm your email🗯", fmt.Sprintf("Your confirmation code is %s", code.Code)); err != nil {
 		return errors.New("could not send email")
 	}
 	return nil
@@ -94,26 +93,33 @@ func (us *UserServiceImpl) Register(email, password, clientIp string) error {
 func (us *UserServiceImpl) Confirm(code *models.Code) error {
 	switch code.Action {
 	case "registration":
-		code.User.IsActive = true
+		// activate user via RPC
+		if err := us.userRPC.ActivateUser(code.UserId); err != nil {
+			return errors.New("could not activate user")
+		}
 		code.IsUsed = true
-		if err := us.codeRepo.UpdateWithAssociations(code); err != nil {
+		if err := us.codeRepo.Update(code); err != nil {
 			return errors.New("could not confirm registration")
 		}
 		// create default project via RPC
-		if err := us.projectRPC.CreateDefaultProject(code.User.ID); err != nil {
+		if err := us.projectRPC.CreateDefaultProject(code.UserId); err != nil {
 			return errors.New("could not create default project")
 		}
 		// create default subscription via RPC
-		if err := us.subscriptionRPC.CreateFreeTrial(uint(code.User.ID)); err != nil {
+		if err := us.subscriptionRPC.CreateFreeTrial(code.UserId); err != nil {
 			return errors.New("could not create default subscription")
 		}
 	case "reset_password":
-		if !code.User.IsActive {
-			code.User.IsActive = true
+		// activate user via RPC
+		if err := us.userRPC.ActivateUser(code.UserId); err != nil {
+			return errors.New("could not activate user")
 		}
-		code.User.Password = code.Data
+		// reset password via RPC
+		if err := us.userRPC.ResetPassword(code.UserId, code.Data); err != nil {
+			return errors.New("could not reset password")
+		}
 		code.IsUsed = true
-		err := us.codeRepo.UpdateWithAssociations(code)
+		err := us.codeRepo.Update(code)
 		if err != nil {
 			return errors.New("could not confirm reset password")
 		}
@@ -122,31 +128,28 @@ func (us *UserServiceImpl) Confirm(code *models.Code) error {
 }
 
 func (us *UserServiceImpl) ResetPassword(email, password string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	// get user by email via RPC
+	user, err := us.userRPC.GetUserByEmail(email)
 	if err != nil {
-		return errors.New("could not hash password")
+		return errors.New("could not get user")
 	}
-	user, err := us.userRepo.FindByEmail(email)
-	if err != nil {
-		return errors.New("could not find user by email")
-	}
-	code, err := us.codeRepo.GetLastIsActiveCode(user.ID, "reset_password")
+	code, err := us.codeRepo.GetLastIsActiveCode(user.UserId, "reset_password")
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return errors.New("could not get last active code")
 	}
 	if code == nil || code.IsUsed {
-		_, err := us.codeRepo.NewCode(*user, "reset_password", string(hashedPassword))
+		_, err := us.codeRepo.NewCode(user.UserId, "reset_password", password)
 		if err != nil {
 			return errors.New("could not gen new code")
 		}
 	}
 	// extend expiration code and return previous active code
-	code.Data = string(hashedPassword)
+	code.Data = password
 	if err := us.codeRepo.ExtendExpiration(code); err != nil {
 		return errors.New("could not extend expiration code")
 	}
 	// sending confirmation code via RPC
-	if err := us.mailRPC.SendMail(user.Email, "Reset your password🗯", fmt.Sprintf("Your confirmation code is %s", code.Code)); err != nil {
+	if err := us.mailRPC.SendMail(email, "Reset your password🗯", fmt.Sprintf("Your confirmation code is %s", code.Code)); err != nil {
 		return errors.New("could not send email")
 	}
 	return nil

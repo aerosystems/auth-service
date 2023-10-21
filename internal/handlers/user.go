@@ -3,13 +3,13 @@ package handlers
 import (
 	"errors"
 	"github.com/aerosystems/auth-service/internal/helpers"
-	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
+	"github.com/aerosystems/auth-service/internal/services"
 	"gorm.io/gorm"
 	"net/http"
 )
 
 func (h *BaseHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	accessTokenClaims := r.Context().Value(helpers.ContextKey("accessTokenClaims")).(*TokenService.AccessTokenClaims)
+	accessTokenClaims := r.Context().Value(helpers.ContextKey("accessTokenClaims")).(*services.AccessTokenClaims)
 	user, err := h.userRepo.FindByID(accessTokenClaims.UserID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404001, "User not found", err))

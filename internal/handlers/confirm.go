@@ -51,7 +51,7 @@ func (h *BaseHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if code.IsUsed {
-		err := fmt.Errorf("code was used by user %d", code.User.ID)
+		err := fmt.Errorf("code was used by user %d", code.UserId)
 		_ = WriteResponse(w, http.StatusGone, NewErrorPayload(410003, "code was used", err))
 		return
 	}

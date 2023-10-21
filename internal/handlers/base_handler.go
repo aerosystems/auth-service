@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/aerosystems/auth-service/internal/models"
-	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
+	"github.com/aerosystems/auth-service/internal/services"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -14,22 +14,19 @@ import (
 
 type BaseHandler struct {
 	log          *logrus.Logger
-	userRepo     models.UserRepository
 	codeRepo     models.CodeRepository
-	tokenService *TokenService.Service
-	userService  models.UserService
+	tokenService services.TokenService
+	userService  services.UserService
 }
 
 func NewBaseHandler(
 	log *logrus.Logger,
-	userRepo models.UserRepository,
 	codeRepo models.CodeRepository,
-	tokenService *TokenService.Service,
-	userService models.UserService,
+	tokenService services.TokenService,
+	userService services.UserService,
 ) *BaseHandler {
 	return &BaseHandler{
 		log:          log,
-		userRepo:     userRepo,
 		codeRepo:     codeRepo,
 		tokenService: tokenService,
 		userService:  userService,

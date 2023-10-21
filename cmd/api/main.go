@@ -11,7 +11,6 @@ import (
 	"github.com/aerosystems/auth-service/pkg/logger"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
 	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
-	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -21,7 +20,7 @@ const webPort = "80"
 
 // @title Auth Service
 // @version 1.0.7
-// @description A mandatory part of any microservice infrastructure of a modern WEB application
+// @description A mandatory part of any microservice infrastructure of a modern WEB application, which is responsible for user authentication and authorization.
 
 // @contact.name Artem Kostenko
 // @contact.url https://github.com/aerosystems
@@ -41,7 +40,7 @@ func main() {
 	log := logger.NewLogger(os.Getenv("HOSTNAME"))
 
 	clientGORM := GormPostgres.NewClient(logrus.NewEntry(log.Logger))
-	clientGORM.AutoMigrate(models.User{}, models.Code{})
+	_ = clientGORM.AutoMigrate(models.Code{})
 
 	clientREDIS := RedisClient.NewClient()
 
@@ -57,16 +56,17 @@ func main() {
 	subscriptionClientRPC := RPCClient.NewClient("tcp", "subscription-service:5001")
 	subscriptionRPC := RPCServices.NewSubscriptionRPC(subscriptionClientRPC)
 
-	userRepo := repository.NewUserRepo(clientGORM, clientREDIS)
+	userClientRPC := RPCClient.NewClient("tcp", "user-service:5001")
+	userRPC := RPCServices.NewUserRPC(userClientRPC)
+
 	codeRepo := repository.NewCodeRepo(clientGORM)
 
-	userService := services.NewUserServiceImpl(userRepo, codeRepo, checkmailRPC, mailRPC, projectRPC, subscriptionRPC)
-	tokenService := TokenService.NewService(clientREDIS)
+	userService := services.NewUserServiceImpl(codeRepo, checkmailRPC, mailRPC, projectRPC, subscriptionRPC, userRPC)
+	tokenService := services.NewTokenServiceImpl(clientREDIS)
 
 	app := Config{
 		BaseHandler: handlers.NewBaseHandler(
 			log.Logger,
-			userRepo,
 			codeRepo,
 			tokenService,
 			userService,
