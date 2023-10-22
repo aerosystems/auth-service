@@ -529,7 +529,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{"https"},
 	Title:            "Auth Service",
-	Description:      "A mandatory part of any microservice infrastructure of a modern WEB application",
+	Description:      "A mandatory part of any microservice infrastructure of a modern WEB application, which is responsible for user authentication and authorization.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/aerosystems/auth-service/pkg/normalizers"
 	"github.com/aerosystems/auth-service/pkg/validators"
 	"net/http"
@@ -48,36 +47,19 @@ func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
 		_ = WriteResponse(w, http.StatusBadRequest, NewErrorPayload(422006, "password does not valid", err))
 		return
 	}
-	user, err := h.userRepo.FindByEmail(email)
+	user, err := h.userService.MatchPassword(email, requestPayload.Password)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusNotFound, NewErrorPayload(404007, "could not find user by email", err))
-		return
-	}
-	if !user.IsActive {
-		err := fmt.Errorf("user %d did not confirm registration yet", user.ID)
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500002, "user did not confirm registration yet", err))
-		return
-	}
-	valid, err := h.userRepo.PasswordMatches(user, requestPayload.Password)
-	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(401009, "could not to check password", err))
-		return
-	}
-	if !valid {
-		if err == nil {
-			err = fmt.Errorf("user %d entered invalid password", user.ID)
-		}
-		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(401010, "invalid credentials", err))
+		_ = WriteResponse(w, http.StatusUnauthorized, NewErrorPayload(401001, "could not match email and password", err))
 		return
 	}
 	// create a pair of JWT tokens
-	ts, err := h.tokenService.CreateToken(user.ID, user.Role)
+	ts, err := h.tokenService.CreateToken(int(user.UserId), user.Role)
 	if err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not to create a pair of JWT Tokens", err))
 		return
 	}
 	// add a refresh token UUID to cache
-	if err = h.tokenService.CreateCacheKey(user.ID, ts); err != nil {
+	if err = h.tokenService.CreateCacheKey(int(user.UserId), ts); err != nil {
 		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500004, "could not to add a Refresh Token", err))
 		return
 	}

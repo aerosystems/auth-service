@@ -68,7 +68,7 @@ info:
     name: Artem Kostenko
     url: https://github.com/aerosystems
   description: A mandatory part of any microservice infrastructure of a modern WEB
-    application
+    application, which is responsible for user authentication and authorization.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html

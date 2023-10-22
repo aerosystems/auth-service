@@ -13,6 +13,7 @@ type UserService interface {
 	Register(email, password, clientIp string) error
 	Confirm(code *models.Code) error
 	ResetPassword(email, password string) error
+	MatchPassword(email, password string) (*RPCServices.UserRPCPayload, error)
 }
 
 type UserServiceImpl struct {
@@ -153,4 +154,20 @@ func (us *UserServiceImpl) ResetPassword(email, password string) error {
 		return errors.New("could not send email")
 	}
 	return nil
+}
+
+func (us *UserServiceImpl) MatchPassword(email, password string) (*RPCServices.UserRPCPayload, error) {
+	// get user by email via RPC
+	user, err := us.userRPC.GetUserByEmail(email)
+	if err != nil {
+		return nil, errors.New("could not get user")
+	}
+	if user.IsActive == false {
+		return nil, errors.New("user is not active")
+	}
+	// match password via RPC
+	if err := us.userRPC.MatchPassword(email, password); err != nil {
+		return nil, errors.New("password does not match")
+	}
+	return user, nil
 }

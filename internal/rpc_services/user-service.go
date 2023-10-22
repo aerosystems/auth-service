@@ -9,6 +9,7 @@ type UserService interface {
 	GetUserByEmail(email string) (user *UserRPCPayload, err error)
 	ResetPassword(userId uint, password string) error
 	ActivateUser(userId uint) error
+	MatchPassword(email, password string) (err error)
 }
 
 type UserRPC struct {
@@ -34,6 +35,7 @@ type ResetPasswordRPCPayload struct {
 type UserRPCPayload struct {
 	UserId   uint
 	IsActive bool
+	Role     string
 }
 
 func (u *UserRPC) CreateUser(email, password string) (userId uint, err error) {
@@ -54,4 +56,9 @@ func (u *UserRPC) ResetPassword(userId uint, password string) error {
 func (u *UserRPC) ActivateUser(userId uint) error {
 	err := u.rpcClient.Call("UserService.ActivateUser", userId, nil)
 	return err
+}
+
+func (u *UserRPC) MatchPassword(email, password string) (err error) {
+	err = u.rpcClient.Call("UserService.MatchPassword", CreateUserRPCPayload{email, password}, nil)
+	return
 }

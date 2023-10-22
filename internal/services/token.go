@@ -22,7 +22,7 @@ type TokenDetails struct {
 
 type AccessTokenClaims struct {
 	AccessUUID string `json:"accessUuid"`
-	UserID     int    `json:"userId"`
+	UserId     int    `json:"userId"`
 	UserRole   string `json:"userRole"`
 	Exp        int    `json:"exp"`
 	jwt.StandardClaims
@@ -30,14 +30,14 @@ type AccessTokenClaims struct {
 
 type RefreshTokenClaims struct {
 	RefreshUUID string `json:"refreshUuid"`
-	UserID      int    `json:"userId"`
+	UserId      int    `json:"userId"`
 	UserRole    string `json:"userRole"`
 	Exp         int    `json:"exp"`
 	jwt.StandardClaims
 }
 
 type AccessTokenCache struct {
-	UserID      int    `json:"userId"`
+	UserId      int    `json:"userId"`
 	RefreshUUID string `json:"refreshUuid"`
 }
 
@@ -46,7 +46,7 @@ type TokenService interface {
 	DecodeRefreshToken(tokenString string) (*RefreshTokenClaims, error)
 	DecodeAccessToken(tokenString string) (*AccessTokenClaims, error)
 	DropCacheTokens(accessTokenClaims AccessTokenClaims) error
-	CreateCacheKey(userID int, td *TokenDetails) error
+	CreateCacheKey(userId int, td *TokenDetails) error
 	DropCacheKey(UUID string) error
 	GetCacheValue(UUID string) (*string, error)
 }
@@ -76,7 +76,7 @@ func (r *TokenServiceImpl) CreateCacheKey(userID int, td *TokenDetails) error {
 	rt := time.Unix(td.RtExpires, 0) //converting Unix to UTC(to Time object)
 	now := time.Now()
 	cacheJSON, err := json.Marshal(AccessTokenCache{
-		UserID:      userID,
+		UserId:      userID,
 		RefreshUUID: td.RefreshUuid.String(),
 	})
 	if err != nil {
