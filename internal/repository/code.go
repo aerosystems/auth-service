@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"os"
 	"strconv"
 	"time"
@@ -20,15 +21,12 @@ func NewCodeRepo(db *gorm.DB) *CodeRepo {
 	}
 }
 
-func (r *CodeRepo) FindAll() (*[]models.Code, error) {
-	var codes []models.Code
-	r.db.Find(&codes)
-	return &codes, nil
-}
-
 func (r *CodeRepo) FindById(Id uint) (*models.Code, error) {
 	var code models.Code
 	result := r.db.Find(&code, Id)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if result.Error != nil {
 		return nil, result.Error
 	}

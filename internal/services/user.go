@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/aerosystems/auth-service/internal/models"
 	RPCServices "github.com/aerosystems/auth-service/internal/rpc_services"
-	"gorm.io/gorm"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 )
 
@@ -37,6 +37,8 @@ func NewUserServiceImpl(codeRepo models.CodeRepository, checkmailRPC *RPCService
 }
 
 func (us *UserServiceImpl) Register(email, password, clientIp string) error {
+	// hashing password
+	passwordHash, _ := us.hashPassword(password)
 	// checking email in blacklist via RPC
 	if _, err := us.checkmailRPC.IsTrustEmail(email, clientIp); err != nil {
 		log.Println(err)
@@ -52,7 +54,7 @@ func (us *UserServiceImpl) Register(email, password, clientIp string) error {
 			return errors.New("user with this email already exists")
 		} else {
 			// updating password for inactive user
-			if err := us.userRPC.ResetPassword(user.UserId, password); err != nil {
+			if err := us.userRPC.ResetPassword(user.UserId, passwordHash); err != nil {
 				return errors.New("could not update password")
 			}
 			code, _ := us.codeRepo.GetLastIsActiveCode(user.UserId, "registration")
@@ -75,7 +77,7 @@ func (us *UserServiceImpl) Register(email, password, clientIp string) error {
 		}
 	}
 	// creating new user via RPC
-	userId, err := us.userRPC.CreateUser(email, password)
+	userId, err := us.userRPC.CreateUser(email, passwordHash)
 	if err != nil {
 		return errors.New("could not create new user")
 	}
@@ -129,23 +131,25 @@ func (us *UserServiceImpl) Confirm(code *models.Code) error {
 }
 
 func (us *UserServiceImpl) ResetPassword(email, password string) error {
+	// hashing password
+	passwordHash, _ := us.hashPassword(password)
 	// get user by email via RPC
 	user, err := us.userRPC.GetUserByEmail(email)
 	if err != nil {
 		return errors.New("could not get user")
 	}
 	code, err := us.codeRepo.GetLastIsActiveCode(user.UserId, "reset_password")
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err != nil {
 		return errors.New("could not get last active code")
 	}
 	if code == nil || code.IsUsed {
-		_, err := us.codeRepo.NewCode(user.UserId, "reset_password", password)
+		_, err := us.codeRepo.NewCode(user.UserId, "reset_password", passwordHash)
 		if err != nil {
 			return errors.New("could not gen new code")
 		}
 	}
 	// extend expiration code and return previous active code
-	code.Data = password
+	code.Data = passwordHash
 	if err := us.codeRepo.ExtendExpiration(code); err != nil {
 		return errors.New("could not extend expiration code")
 	}
@@ -170,4 +174,12 @@ func (us *UserServiceImpl) MatchPassword(email, password string) (*RPCServices.U
 		return nil, errors.New("password does not match")
 	}
 	return user, nil
+}
+
+func (us *UserServiceImpl) hashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return "", errors.New("could not hash password")
+	}
+	return string(hash), nil
 }

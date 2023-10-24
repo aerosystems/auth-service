@@ -14,7 +14,6 @@ type Code struct {
 }
 
 type CodeRepository interface {
-	FindAll() (*[]Code, error)
 	FindById(Id uint) (*Code, error)
 	Create(code *Code) error
 	Update(code *Code) error

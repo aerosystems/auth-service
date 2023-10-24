@@ -5,11 +5,11 @@ import (
 )
 
 type UserService interface {
-	CreateUser(email, password string) (userId uint, err error)
+	CreateUser(email, passwordHash string) (userId uint, err error)
 	GetUserByEmail(email string) (user *UserRPCPayload, err error)
-	ResetPassword(userId uint, password string) error
+	ResetPassword(userId uint, passwordHash string) error
 	ActivateUser(userId uint) error
-	MatchPassword(email, password string) (err error)
+	MatchPassword(email, passwordHash string) (err error)
 }
 
 type UserRPC struct {
@@ -22,24 +22,16 @@ func NewUserRPC(rpcClient *rpc.Client) *UserRPC {
 	}
 }
 
-type CreateUserRPCPayload struct {
-	Email    string
-	Password string
-}
-
-type ResetPasswordRPCPayload struct {
-	UserId   uint
-	Password string
-}
-
 type UserRPCPayload struct {
-	UserId   uint
-	IsActive bool
-	Role     string
+	UserId       uint
+	IsActive     bool
+	Role         string
+	Email        string
+	PasswordHash string
 }
 
-func (u *UserRPC) CreateUser(email, password string) (userId uint, err error) {
-	err = u.rpcClient.Call("UserService.CreateUser", CreateUserRPCPayload{email, password}, userId)
+func (u *UserRPC) CreateUser(email, passwordHash string) (userId uint, err error) {
+	err = u.rpcClient.Call("UserService.CreateUser", UserRPCPayload{Email: email, PasswordHash: passwordHash}, userId)
 	return
 }
 
@@ -48,8 +40,8 @@ func (u *UserRPC) GetUserByEmail(email string) (user *UserRPCPayload, err error)
 	return
 }
 
-func (u *UserRPC) ResetPassword(userId uint, password string) error {
-	err := u.rpcClient.Call("UserService.ResetPassword", ResetPasswordRPCPayload{userId, password}, nil)
+func (u *UserRPC) ResetPassword(userId uint, passwordHash string) error {
+	err := u.rpcClient.Call("UserService.ResetPassword", UserRPCPayload{UserId: userId, PasswordHash: passwordHash}, nil)
 	return err
 }
 
@@ -58,7 +50,7 @@ func (u *UserRPC) ActivateUser(userId uint) error {
 	return err
 }
 
-func (u *UserRPC) MatchPassword(email, password string) (err error) {
-	err = u.rpcClient.Call("UserService.MatchPassword", CreateUserRPCPayload{email, password}, nil)
+func (u *UserRPC) MatchPassword(email, passwordHash string) (err error) {
+	err = u.rpcClient.Call("UserService.MatchPassword", UserRPCPayload{Email: email, PasswordHash: passwordHash}, nil)
 	return
 }
