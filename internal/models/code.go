@@ -17,7 +17,6 @@ type CodeRepository interface {
 	FindById(Id uint) (*Code, error)
 	Create(code *Code) error
 	Update(code *Code) error
-	UpdateWithAssociations(code *Code) error
 	Delete(code *Code) error
 	GetByCode(value string) (*Code, error)
 	GetLastIsActiveCode(UserId uint, Action string) (*Code, error)

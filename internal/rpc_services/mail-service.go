@@ -3,7 +3,7 @@ package RPCServices
 import "net/rpc"
 
 type MailService interface {
-	SendMail(to, subject, body string) error
+	SendEmail(to, subject, body string) error
 }
 
 type MailRPC struct {
@@ -22,10 +22,10 @@ type MailRPCPayload struct {
 	Body    string
 }
 
-func (ms *MailRPC) SendMail(to, subject, body string) error {
+func (ms *MailRPC) SendEmail(to, subject, body string) error {
 	var result string
 	if err := ms.rpcClient.Call(
-		"MailServer.SendMail",
+		"MailServer.SendEmail",
 		MailRPCPayload{
 			To:      to,
 			Subject: subject,
