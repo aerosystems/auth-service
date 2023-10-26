@@ -44,10 +44,7 @@ func (us *UserServiceImpl) Register(email, password, clientIp string) error {
 		log.Println(err)
 	}
 	// getting user by email via RPC
-	user, err := us.userRPC.GetUserByEmail(email)
-	if err != nil {
-		return errors.New("could not get user")
-	}
+	user, _ := us.userRPC.GetUserByEmail(email)
 	// if user with this email already exists
 	if user != nil {
 		if user.IsActive {
@@ -60,12 +57,12 @@ func (us *UserServiceImpl) Register(email, password, clientIp string) error {
 			code, _ := us.codeRepo.GetLastIsActiveCode(user.UserId, "registration")
 			if code == nil {
 				// generating confirmation code
-				if _, err = us.codeRepo.NewCode(user.UserId, "registration", ""); err != nil {
+				if _, err := us.codeRepo.NewCode(user.UserId, "registration", ""); err != nil {
 					return errors.New("could not gen new code")
 				}
 			} else {
 				// extend expiration code and return previous active code
-				if err = us.codeRepo.ExtendExpiration(code); err != nil {
+				if err := us.codeRepo.ExtendExpiration(code); err != nil {
 					return errors.New("could not extend expiration code")
 				}
 			}
@@ -79,6 +76,7 @@ func (us *UserServiceImpl) Register(email, password, clientIp string) error {
 	// creating new user via RPC
 	userId, err := us.userRPC.CreateUser(email, passwordHash)
 	if err != nil {
+		log.Println(err)
 		return errors.New("could not create new user")
 	}
 	// generating confirmation code

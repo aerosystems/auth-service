@@ -53,7 +53,7 @@ func main() {
 	projectClientRPC := RPCClient.NewClient("tcp", "project-service:5001")
 	projectRPC := RPCServices.NewProjectRPC(projectClientRPC)
 
-	subscriptionClientRPC := RPCClient.NewClient("tcp", "subscription-service:5001")
+	subscriptionClientRPC := RPCClient.NewClient("tcp", "subs-service:5001")
 	subscriptionRPC := RPCServices.NewSubscriptionRPC(subscriptionClientRPC)
 
 	userClientRPC := RPCClient.NewClient("tcp", "user-service:5001")
