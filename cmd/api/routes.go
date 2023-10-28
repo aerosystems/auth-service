@@ -20,9 +20,6 @@ func (app *Config) routes(log *logrus.Logger) http.Handler {
 	mux.Use(middleware.Heartbeat("/ping"))
 
 	mux.Post("/v1/user/login", app.BaseHandler.Login)
-	mux.Post("/v1/user/register", app.BaseHandler.Register)
-	mux.Post("/v1/user/confirm", app.BaseHandler.Confirm)
-	mux.Post("/v1/user/reset-password", app.BaseHandler.ResetPassword)
 	mux.Post("/v1/token/refresh", app.BaseHandler.RefreshToken)
 
 	// Private routes Basic Auth

@@ -10,7 +10,7 @@ func NewClient(network, address string) *rpc.Client {
 	count := 0
 
 	for {
-		client, err := rpc.Dial(network, address)
+		client, err := rpc.DialHTTP(network, address)
 		if err != nil {
 			log.Printf("RPC Server %s not ready...", address)
 			count++
