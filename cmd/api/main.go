@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/aerosystems/auth-service/internal/handlers"
+	"github.com/aerosystems/auth-service/internal/middleware"
 	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository"
 	RPCServices "github.com/aerosystems/auth-service/internal/rpc_services"
@@ -11,12 +12,12 @@ import (
 	"github.com/aerosystems/auth-service/pkg/logger"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
 	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
+	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
-	"net/http"
 	"os"
 )
 
-const webPort = "80"
+const webPort = 80
 
 // @title Auth Service
 // @version 1.0.7
@@ -63,26 +64,17 @@ func main() {
 
 	userService := services.NewUserServiceImpl(codeRepo, checkmailRPC, mailRPC, projectRPC, subscriptionRPC, userRPC)
 	tokenService := services.NewTokenServiceImpl(clientREDIS)
+	codeService := services.NewCodeServiceImpl(codeRepo)
 
-	app := Config{
-		BaseHandler: handlers.NewBaseHandler(
-			log.Logger,
-			codeRepo,
-			tokenService,
-			userService,
-		),
-		TokenService: tokenService,
-	}
+	baseHandler := handlers.NewBaseHandler(os.Getenv("APP_ENV"), log.Logger, tokenService, userService, codeService)
 
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(log.Logger),
-	}
+	app := NewConfig(baseHandler, tokenService)
+	e := app.NewRouter()
+	middleware.AddMiddleware(e, log.Logger)
+	e.Validator = &CustomValidator{validator: validator.New()}
 
-	log.Infof("starting auth-service HTTP Server on port %s\n", webPort)
-	err := srv.ListenAndServe()
-
-	if err != nil {
-		log.Panic(err)
+	log.Infof("starting auth-service HTTP server on port %d\n", webPort)
+	if err := e.Start(fmt.Sprintf(":%d", webPort)); err != nil {
+		log.Fatal(err)
 	}
 }

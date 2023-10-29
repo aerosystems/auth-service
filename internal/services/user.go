@@ -3,10 +3,13 @@ package services
 import (
 	"errors"
 	"fmt"
+	"github.com/aerosystems/auth-service/internal/helpers"
 	"github.com/aerosystems/auth-service/internal/models"
 	RPCServices "github.com/aerosystems/auth-service/internal/rpc_services"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"os"
+	"strings"
 )
 
 type UserService interface {
@@ -57,8 +60,9 @@ func (us *UserServiceImpl) Register(email, password, clientIp string) error {
 			code, _ := us.codeRepo.GetLastIsActiveCode(user.UserId, "registration")
 			if code == nil {
 				// generating confirmation code
-				if _, err := us.codeRepo.NewCode(user.UserId, "registration", ""); err != nil {
-					return fmt.Errorf("could not gen new code: %s", err.Error())
+				codeObj := NewCode(user.UserId, "registration", "")
+				if err := us.codeRepo.Create(codeObj); err != nil {
+					return errors.New("could not gen new code")
 				}
 			} else {
 				// extend expiration code and return previous active code
@@ -79,12 +83,12 @@ func (us *UserServiceImpl) Register(email, password, clientIp string) error {
 		return fmt.Errorf("could not create new user: %s", err.Error())
 	}
 	// generating confirmation code
-	code, err := us.codeRepo.NewCode(userId, "registration", "")
-	if err != nil {
-		return fmt.Errorf("could not gen new code: %s", err.Error())
+	codeObj := NewCode(userId, "registration", "")
+	if err := us.codeRepo.Create(codeObj); err != nil {
+		return errors.New("could not gen new code")
 	}
 	// sending confirmation code via RPC
-	if err := us.mailRPC.SendEmail(email, "Confirm your email🗯", fmt.Sprintf("Your confirmation code is %s", code.Code)); err != nil {
+	if err := us.mailRPC.SendEmail(email, "Confirm your email🗯", fmt.Sprintf("Your confirmation code is %s", codeObj.Code)); err != nil {
 		return fmt.Errorf("could not send email: %s", err.Error())
 	}
 	return nil
@@ -139,8 +143,8 @@ func (us *UserServiceImpl) ResetPassword(email, password string) error {
 		return errors.New("could not get last active code")
 	}
 	if code == nil || code.IsUsed {
-		_, err := us.codeRepo.NewCode(user.UserId, "reset_password", passwordHash)
-		if err != nil {
+		codeObj := NewCode(user.UserId, "reset_password", passwordHash)
+		if err := us.codeRepo.Create(codeObj); err != nil {
 			return errors.New("could not gen new code")
 		}
 	}
@@ -178,4 +182,28 @@ func (us *UserServiceImpl) hashPassword(password string) (string, error) {
 		return "", errors.New("could not hash password")
 	}
 	return string(hash), nil
+}
+
+func normalizeEmail(data string) string {
+	addr := strings.ToLower(data)
+
+	arrAddr := strings.Split(addr, "@")
+	username := arrAddr[0]
+	domain := arrAddr[1]
+
+	googleDomains := strings.Split(os.Getenv("GOOGLEMAIL_DOMAINS"), ",")
+
+	//checking Google mail aliases
+	if helpers.Contains(googleDomains, domain) {
+		//removing all dots from username mail
+		username = strings.ReplaceAll(username, ".", "")
+		//removing all characters after +
+		if strings.Contains(username, "+") {
+			res := strings.Split(username, "+")
+			username = res[0]
+		}
+		addr = username + "@gmail.com"
+	}
+
+	return addr
 }

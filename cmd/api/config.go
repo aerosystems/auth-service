@@ -6,6 +6,13 @@ import (
 )
 
 type Config struct {
-	BaseHandler  *handlers.BaseHandler
-	TokenService services.TokenService
+	baseHandler  *handlers.BaseHandler
+	tokenService services.TokenService
+}
+
+func NewConfig(baseHandler *handlers.BaseHandler, tokenService services.TokenService) *Config {
+	return &Config{
+		baseHandler:  baseHandler,
+		tokenService: tokenService,
+	}
 }
