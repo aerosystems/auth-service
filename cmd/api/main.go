@@ -8,6 +8,7 @@ import (
 	"github.com/aerosystems/auth-service/internal/repository"
 	RPCServices "github.com/aerosystems/auth-service/internal/rpc_services"
 	"github.com/aerosystems/auth-service/internal/services"
+	"github.com/aerosystems/auth-service/internal/validators"
 	GormPostgres "github.com/aerosystems/auth-service/pkg/gorm_postgres"
 	"github.com/aerosystems/auth-service/pkg/logger"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
@@ -51,18 +52,13 @@ func main() {
 	mailClientRPC := RPCClient.NewClient("tcp", "mail-service:5001")
 	mailRPC := RPCServices.NewMailRPC(mailClientRPC)
 
-	projectClientRPC := RPCClient.NewClient("tcp", "project-service:5001")
-	projectRPC := RPCServices.NewProjectRPC(projectClientRPC)
-
-	subscriptionClientRPC := RPCClient.NewClient("tcp", "subs-service:5001")
-	subscriptionRPC := RPCServices.NewSubscriptionRPC(subscriptionClientRPC)
-
 	userClientRPC := RPCClient.NewClient("tcp", "user-service:5001")
-	userRPC := RPCServices.NewUserRPC(userClientRPC)
+	userRPC := RPCServices.NewCustomerRPC(userClientRPC)
 
 	codeRepo := repository.NewCodeRepo(clientGORM)
+	userRepo := repository.NewUserRepo(clientGORM)
 
-	userService := services.NewUserServiceImpl(codeRepo, checkmailRPC, mailRPC, projectRPC, subscriptionRPC, userRPC)
+	userService := services.NewUserServiceImpl(codeRepo, userRepo, checkmailRPC, mailRPC, userRPC)
 	tokenService := services.NewTokenServiceImpl(clientREDIS)
 	codeService := services.NewCodeServiceImpl(codeRepo)
 
@@ -71,7 +67,10 @@ func main() {
 	app := NewConfig(baseHandler, tokenService)
 	e := app.NewRouter()
 	middleware.AddMiddleware(e, log.Logger)
-	e.Validator = &CustomValidator{validator: validator.New()}
+
+	validator := validator.New()
+	validator.RegisterValidation("customPasswordRule", validators.CustomPasswordRule)
+	e.Validator = &validators.CustomValidator{Validator: validator}
 
 	log.Infof("starting auth-service HTTP server on port %d\n", webPort)
 	if err := e.Start(fmt.Sprintf(":%d", webPort)); err != nil {

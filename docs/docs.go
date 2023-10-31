@@ -22,7 +22,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/v1/token/refresh": {
+        "/v1/confirm": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -33,15 +33,15 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "refresh a pair of JWT tokens",
+                "summary": "confirm registration/reset password with 6-digit code from email/sms",
                 "parameters": [
                     {
-                        "description": "raw request body, should contain Refresh Token",
-                        "name": "login",
+                        "description": "raw request body",
+                        "name": "code",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.RefreshTokenRequestBody"
+                            "$ref": "#/definitions/handlers.CodeRequestBody"
                         }
                     }
                 ],
@@ -49,19 +49,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handlers.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handlers.TokensResponseBody"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/handlers.Response"
                         }
                     },
                     "400": {
@@ -70,8 +58,54 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/sign-up": {
+            "post": {
+                "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "registration user by credentials",
+                "parameters": [
+                    {
+                        "description": "raw request body",
+                        "name": "registration",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UserRequestBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -124,69 +158,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/user/confirm": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "confirm registration/reset password with 6-digit code from email/sms",
-                "parameters": [
-                    {
-                        "description": "raw request body",
-                        "name": "code",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.CodeRequestBody"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "410": {
-                        "description": "Gone",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/user/login": {
             "post": {
                 "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length\nResponse contain pair JWT tokens, use /token/refresh for updating them",
@@ -207,7 +178,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.LoginRequestBody"
+                            "$ref": "#/definitions/handlers.UserRequestBody"
                         }
                     }
                 ],
@@ -301,130 +272,19 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/v1/user/register": {
-            "post": {
-                "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "registration user by credentials",
-                "parameters": [
-                    {
-                        "description": "raw request body",
-                        "name": "registration",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.RegistrationRequestBody"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/user/reset-password": {
-            "post": {
-                "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "resetting password",
-                "parameters": [
-                    {
-                        "description": "raw request body",
-                        "name": "registration",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ResetPasswordRequestBody"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
         "handlers.CodeRequestBody": {
             "type": "object",
+            "required": [
+                "code"
+            ],
             "properties": {
                 "code": {
                     "type": "string",
+                    "maxLength": 6,
+                    "minLength": 6,
                     "example": "012345"
                 }
             }
@@ -438,54 +298,6 @@ const docTemplate = `{
                 "error": {},
                 "message": {
                     "type": "string"
-                }
-            }
-        },
-        "handlers.LoginRequestBody": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "example@gmail.com"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "P@ssw0rd"
-                }
-            }
-        },
-        "handlers.RefreshTokenRequestBody": {
-            "type": "object",
-            "properties": {
-                "refreshToken": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-                }
-            }
-        },
-        "handlers.RegistrationRequestBody": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "example@gmail.com"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "P@ssw0rd"
-                }
-            }
-        },
-        "handlers.ResetPasswordRequestBody": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "example@gmail.com"
-                },
-                "password": {
-                    "type": "string",
-                    "example": "P@ssw0rd"
                 }
             }
         },
@@ -508,6 +320,23 @@ const docTemplate = `{
                 "refreshToken": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                }
+            }
+        },
+        "handlers.UserRequestBody": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "example@gmail.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "P@ssw0rd"
                 }
             }
         }

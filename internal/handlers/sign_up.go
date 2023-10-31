@@ -5,11 +5,6 @@ import (
 	"net/http"
 )
 
-type UserRequestBody struct {
-	Email    string `json:"email" example:"example@gmail.com"`
-	Password string `json:"password" example:"P@ssw0rd" validate:"gte=8"`
-}
-
 // SignUp godoc
 // @Summary registration user by credentials
 // @Description Password should contain:
@@ -21,7 +16,7 @@ type UserRequestBody struct {
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param registration body SuccessResponse true "raw request body"
+// @Param registration body UserRequestBody true "raw request body"
 // @Success 201 {object} Response
 // @Failure 400 {object} ErrorResponse
 // @Failure 422 {object} ErrorResponse
@@ -35,7 +30,7 @@ func (h *BaseHandler) SignUp(c echo.Context) error {
 	if err := c.Validate(requestPayload); err != nil {
 		return err
 	}
-	if err := h.userService.Register(requestPayload.Email, requestPayload.Password, c.RealIP()); err != nil {
+	if err := h.userService.RegisterCustomer(requestPayload.Email, requestPayload.Password, c.RealIP()); err != nil {
 		return h.ErrorResponse(c, http.StatusInternalServerError, "could not register user", err)
 	}
 	return h.SuccessResponse(c, http.StatusCreated, "user was successfully registered", nil)

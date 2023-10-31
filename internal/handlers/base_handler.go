@@ -30,6 +30,11 @@ type TokensResponseBody struct {
 	RefreshToken string `json:"refreshToken" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
 }
 
+type UserRequestBody struct {
+	Email    string `json:"email" example:"example@gmail.com" validate:"required,email"`
+	Password string `json:"password" example:"P@ssw0rd" validate:"required,customPasswordValidator"`
+}
+
 // Response is the type used for sending JSON around
 type Response struct {
 	Message string `json:"message"`

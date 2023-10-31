@@ -45,12 +45,12 @@ func (cs *CodeServiceImpl) GetCode(code string) (*models.Code, error) {
 	return codeObj, nil
 }
 
-func NewCode(UserId uint, Action string, Data string) *models.Code {
+func NewCode(user models.User, Action string, Data string) *models.Code {
 	codeExpMinutes, _ := strconv.Atoi(os.Getenv("CODE_EXP_MINUTES"))
 
 	code := models.Code{
 		Code:      genCode(),
-		UserId:    UserId,
+		User:      user,
 		CreatedAt: time.Now(),
 		ExpireAt:  time.Now().Add(time.Minute * time.Duration(codeExpMinutes)),
 		Action:    Action,

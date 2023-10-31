@@ -19,7 +19,7 @@ func NewCodeRepo(db *gorm.DB) *CodeRepo {
 	}
 }
 
-func (r *CodeRepo) FindById(Id uint) (*models.Code, error) {
+func (r *CodeRepo) GetById(Id uint) (*models.Code, error) {
 	var code models.Code
 	result := r.db.Find(&code, Id)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -41,6 +41,14 @@ func (r *CodeRepo) Create(code *models.Code) error {
 
 func (r *CodeRepo) Update(code *models.Code) error {
 	result := r.db.Save(&code)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (r *CodeRepo) UpdateWithAssociations(code *models.Code) error {
+	result := r.db.Session(&gorm.Session{FullSaveAssociations: true}).Save(&code)
 	if result.Error != nil {
 		return result.Error
 	}
