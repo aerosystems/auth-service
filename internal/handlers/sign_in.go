@@ -13,18 +13,18 @@ import (
 // @Description - minimum of one digit
 // @Description - minimum of one special character
 // @Description - minimum 8 characters length
-// @Description Response contain pair JWT tokens, use /token/refresh for updating them
+// @Description Response contain pair JWT tokens
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param login body UserRequestBody true "raw request body"
-// @Success 200 {object} Response{data=TokensResponseBody}
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Failure 404 {object} ErrorResponse
-// @Failure 422 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /v1/user/login [post]
+// @Param login body handlers.UserRequestBody true "raw request body"
+// @Success 200 {object} handlers.Response{data=handlers.TokensResponseBody}
+// @Failure 400 {object} handlers.ErrorResponse
+// @Failure 401 {object} handlers.ErrorResponse
+// @Failure 404 {object} handlers.ErrorResponse
+// @Failure 422 {object} handlers.ErrorResponse
+// @Failure 500 {object} handlers.ErrorResponse
+// @Router /v1/sign-in [post]
 func (h *BaseHandler) SignIn(c echo.Context) error {
 	var requestPayload UserRequestBody
 	if err := c.Bind(&requestPayload); err != nil {
@@ -37,14 +37,9 @@ func (h *BaseHandler) SignIn(c echo.Context) error {
 	if !h.userService.CheckPassword(user, requestPayload.Password) {
 		return h.ErrorResponse(c, http.StatusUnauthorized, "invalid password", err)
 	}
-	// create a pair of JWT tokens
 	ts, err := h.tokenService.CreateToken(int(user.Id), user.Role)
 	if err != nil {
 		return h.ErrorResponse(c, http.StatusInternalServerError, "could not create a pair of JWT tokens", err)
-	}
-	// add a refresh token UUID to cache
-	if err = h.tokenService.CreateCacheKey(int(user.Id), ts); err != nil {
-		return h.ErrorResponse(c, http.StatusInternalServerError, "could not create a cache key", err)
 	}
 	tokens := TokensResponseBody{
 		AccessToken:  ts.AccessToken,

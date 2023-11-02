@@ -12,16 +12,15 @@ import (
 // @Accept  json
 // @Produce application/json
 // @Security BearerAuth
-// @Success 200 {object} Response
-// @Failure 401 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
-// @Router /v1/user/logout [post]
+// @Success 200 {object} handlers.Response
+// @Failure 401 {object} handlers.ErrorResponse
+// @Failure 500 {object} handlers.ErrorResponse
+// @Router /v1/sign-out [post]
 func (h *BaseHandler) SignOut(c echo.Context) error {
-	// receive AccessToken Claims from context middleware
 	accessTokenClaims := c.Get("accessTokenClaims").(services.AccessTokenClaims)
 	err := h.tokenService.DropCacheTokens(accessTokenClaims)
 	if err != nil {
 		return h.ErrorResponse(c, http.StatusInternalServerError, "could not logout user", err)
 	}
-	return h.ErrorResponse(c, http.StatusOK, "user was successfully logged out", nil)
+	return h.SuccessResponse(c, http.StatusOK, "user was successfully logged out", nil)
 }

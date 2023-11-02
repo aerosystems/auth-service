@@ -13,8 +13,8 @@ import (
 // @Accept  json
 // @Produce application/json
 // @Security BearerAuth
-// @Success 204 {object} Response
-// @Failure 401 {object} ErrorResponse
+// @Success 204 {object} handlers.Response
+// @Failure 401 {object} handlers.ErrorResponse
 // @Router /v1/token/validate [get]
 func (h *BaseHandler) ValidateToken(c echo.Context) error {
 	// receive AccessToken Claims from context middleware

@@ -73,7 +73,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/sign-up": {
+        "/v1/reset-password": {
             "post": {
                 "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length",
                 "consumes": [
@@ -85,7 +85,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "registration user by credentials",
+                "summary": "resetting password",
                 "parameters": [
                     {
                         "description": "raw request body",
@@ -98,8 +98,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handlers.Response"
                         }
@@ -125,42 +125,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/token/validate": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "api-gateway-special"
-                ],
-                "summary": "validate token",
-                "responses": {
-                    "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/user/login": {
+        "/v1/sign-in": {
             "post": {
-                "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length\nResponse contain pair JWT tokens, use /token/refresh for updating them",
+                "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length\nResponse contain pair JWT tokens",
                 "consumes": [
                     "application/json"
                 ],
@@ -234,7 +201,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/user/logout": {
+        "/v1/sign-out": {
             "post": {
                 "security": [
                     {
@@ -272,6 +239,160 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/sign-up": {
+            "post": {
+                "description": "Password should contain:\n- minimum of one small case letter\n- minimum of one upper case letter\n- minimum of one digit\n- minimum of one special character\n- minimum 8 characters length",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "registration user by credentials",
+                "parameters": [
+                    {
+                        "description": "raw request body",
+                        "name": "registration",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UserRequestBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/token/refresh": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "refresh a pair of JWT tokens",
+                "parameters": [
+                    {
+                        "description": "raw request body, should contain Refresh Token",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RefreshTokenRequestBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handlers.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handlers.TokensResponseBody"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/token/validate": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "api-gateway-special"
+                ],
+                "summary": "validate token",
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -298,6 +419,18 @@ const docTemplate = `{
                 "error": {},
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.RefreshTokenRequestBody": {
+            "type": "object",
+            "required": [
+                "refreshToken"
+            ],
+            "properties": {
+                "refreshToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                 }
             }
         },

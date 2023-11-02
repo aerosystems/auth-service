@@ -18,6 +18,14 @@ definitions:
       message:
         type: string
     type: object
+  handlers.RefreshTokenRequestBody:
+    properties:
+      refreshToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+    required:
+    - refreshToken
+    type: object
   handlers.Response:
     properties:
       data: {}
@@ -91,7 +99,7 @@ paths:
       summary: confirm registration/reset password with 6-digit code from email/sms
       tags:
       - auth
-  /v1/sign-up:
+  /v1/reset-password:
     post:
       consumes:
       - application/json
@@ -112,8 +120,8 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
             $ref: '#/definitions/handlers.Response'
         "400":
@@ -128,30 +136,10 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: registration user by credentials
+      summary: resetting password
       tags:
       - auth
-  /v1/token/validate:
-    get:
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-          schema:
-            $ref: '#/definitions/handlers.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: validate token
-      tags:
-      - api-gateway-special
-  /v1/user/login:
+  /v1/sign-in:
     post:
       consumes:
       - application/json
@@ -162,7 +150,7 @@ paths:
         - minimum of one digit
         - minimum of one special character
         - minimum 8 characters length
-        Response contain pair JWT tokens, use /token/refresh for updating them
+        Response contain pair JWT tokens
       parameters:
       - description: raw request body
         in: body
@@ -205,7 +193,7 @@ paths:
       summary: login user by credentials
       tags:
       - auth
-  /v1/user/logout:
+  /v1/sign-out:
     post:
       consumes:
       - application/json
@@ -229,6 +217,108 @@ paths:
       summary: logout user
       tags:
       - auth
+  /v1/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Password should contain:
+        - minimum of one small case letter
+        - minimum of one upper case letter
+        - minimum of one digit
+        - minimum of one special character
+        - minimum 8 characters length
+      parameters:
+      - description: raw request body
+        in: body
+        name: registration
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserRequestBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: registration user by credentials
+      tags:
+      - auth
+  /v1/token/refresh:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: raw request body, should contain Refresh Token
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RefreshTokenRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.TokensResponseBody'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: refresh a pair of JWT tokens
+      tags:
+      - auth
+  /v1/token/validate:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: validate token
+      tags:
+      - api-gateway-special
 schemes:
 - https
 securityDefinitions:

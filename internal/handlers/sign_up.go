@@ -16,11 +16,11 @@ import (
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param registration body UserRequestBody true "raw request body"
-// @Success 201 {object} Response
-// @Failure 400 {object} ErrorResponse
-// @Failure 422 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Param registration body handlers.UserRequestBody true "raw request body"
+// @Success 201 {object} handlers.Response
+// @Failure 400 {object} handlers.ErrorResponse
+// @Failure 422 {object} handlers.ErrorResponse
+// @Failure 500 {object} handlers.ErrorResponse
 // @Router /v1/sign-up [post]
 func (h *BaseHandler) SignUp(c echo.Context) error {
 	requestPayload := new(UserRequestBody)

@@ -46,7 +46,6 @@ type TokenService interface {
 	DecodeRefreshToken(tokenString string) (*RefreshTokenClaims, error)
 	DecodeAccessToken(tokenString string) (*AccessTokenClaims, error)
 	DropCacheTokens(accessTokenClaims AccessTokenClaims) error
-	CreateCacheKey(userId int, td *TokenDetails) error
 	DropCacheKey(UUID string) error
 	GetCacheValue(UUID string) (*string, error)
 }
@@ -65,27 +64,6 @@ func NewTokenServiceImpl(cache *redis.Client) *TokenServiceImpl {
 func (r *TokenServiceImpl) DropCacheKey(UUID string) error {
 	err := r.cache.Del(UUID).Err()
 	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// CreateCacheKey function that will be used to save the JWTs metadata in Redis
-func (r *TokenServiceImpl) CreateCacheKey(userID int, td *TokenDetails) error {
-	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
-	rt := time.Unix(td.RtExpires, 0) //converting Unix to UTC(to Time object)
-	now := time.Now()
-	cacheJSON, err := json.Marshal(AccessTokenCache{
-		UserId:      userID,
-		RefreshUUID: td.RefreshUuid.String(),
-	})
-	if err != nil {
-		return err
-	}
-	if err := r.cache.Set(td.AccessUuid.String(), cacheJSON, at.Sub(now)).Err(); err != nil {
-		return err
-	}
-	if err := r.cache.Set(td.RefreshUuid.String(), strconv.Itoa(userID), rt.Sub(now)).Err(); err != nil {
 		return err
 	}
 	return nil
@@ -139,6 +117,10 @@ func (r *TokenServiceImpl) CreateToken(userId int, userRole string) (*TokenDetai
 	if err != nil {
 		return nil, err
 	}
+	// add a refresh token UUID to cache
+	if err = r.createCacheKey(userId, td); err != nil {
+		return nil, err
+	}
 	return td, nil
 }
 
@@ -179,6 +161,27 @@ func (r *TokenServiceImpl) DropCacheTokens(accessTokenClaims AccessTokenClaims) 
 	// drop access token from Redis cache
 	err = r.DropCacheKey(accessTokenClaims.AccessUUID)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// createCacheKey function that will be used to save the JWTs metadata in Redis
+func (r *TokenServiceImpl) createCacheKey(userID int, td *TokenDetails) error {
+	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
+	rt := time.Unix(td.RtExpires, 0) //converting Unix to UTC(to Time object)
+	now := time.Now()
+	cacheJSON, err := json.Marshal(AccessTokenCache{
+		UserId:      userID,
+		RefreshUUID: td.RefreshUuid.String(),
+	})
+	if err != nil {
+		return err
+	}
+	if err := r.cache.Set(td.AccessUuid.String(), cacheJSON, at.Sub(now)).Err(); err != nil {
+		return err
+	}
+	if err := r.cache.Set(td.RefreshUuid.String(), strconv.Itoa(userID), rt.Sub(now)).Err(); err != nil {
 		return err
 	}
 	return nil

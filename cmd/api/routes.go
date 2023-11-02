@@ -15,13 +15,13 @@ func (app *Config) NewRouter() *echo.Echo {
 	docsGroup.GET("/*", echoSwagger.WrapHandler)
 
 	e.POST("/v1/sign-up", app.baseHandler.SignUp)
-	//e.POST("/v1/sign-in", app.baseHandler.SignIn)
-	//e.POST("/v1/token/refresh", app.baseHandler.RefreshToken)
-	//e.POST("/v1/confirm", app.baseHandler.Confirm)
-	//e.POST("/v1/reset-password", app.baseHandler.ResetPassword)
-	//
-	//e.POST("/v1/sign-out", app.baseHandler.SignOut, middleware.AuthTokenMiddleware([]string{"customer", "support", "admin"}))
-	//e.POST("/v1/token/validate", app.baseHandler.ValidateToken, middleware.AuthTokenMiddleware([]string{"customer", "support", "admin"}))
+	e.POST("/v1/sign-in", app.baseHandler.SignIn)
+	e.POST("/v1/token/refresh", app.baseHandler.RefreshToken)
+	e.POST("/v1/confirm", app.baseHandler.Confirm)
+	e.POST("/v1/reset-password", app.baseHandler.ResetPassword)
+
+	e.POST("/v1/sign-out", app.baseHandler.SignOut, middleware.AuthTokenMiddleware([]string{"customer", "support", "admin"}))
+	e.POST("/v1/token/validate", app.baseHandler.ValidateToken, middleware.AuthTokenMiddleware([]string{"customer", "support", "admin"}))
 
 	return e
 }
