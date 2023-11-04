@@ -52,13 +52,13 @@ func main() {
 	mailClientRPC := RPCClient.NewClient("tcp", "mail-service:5001")
 	mailRPC := RPCServices.NewMailRPC(mailClientRPC)
 
-	userClientRPC := RPCClient.NewClient("tcp", "user-service:5001")
-	userRPC := RPCServices.NewCustomerRPC(userClientRPC)
+	customerClientRPC := RPCClient.NewClient("tcp", "customer-service:5001")
+	customerRPC := RPCServices.NewCustomerRPC(customerClientRPC)
 
 	codeRepo := repository.NewCodeRepo(clientGORM)
 	userRepo := repository.NewUserRepo(clientGORM)
 
-	userService := services.NewUserServiceImpl(codeRepo, userRepo, checkmailRPC, mailRPC, userRPC)
+	userService := services.NewUserServiceImpl(codeRepo, userRepo, checkmailRPC, mailRPC, customerRPC)
 	tokenService := services.NewTokenServiceImpl(clientREDIS)
 	codeService := services.NewCodeServiceImpl(codeRepo)
 
