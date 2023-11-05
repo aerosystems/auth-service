@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aerosystems/auth-service/internal/models"
-	"github.com/aerosystems/auth-service/internal/validators"
 	"math/rand"
 	"os"
 	"strconv"
@@ -26,9 +25,6 @@ func NewCodeServiceImpl(codeRepo models.CodeRepository) *CodeServiceImpl {
 }
 
 func (cs *CodeServiceImpl) GetCode(code string) (*models.Code, error) {
-	if err := validators.ValidateCode(code); err != nil {
-		return nil, err
-	}
 	codeObj, err := cs.codeRepo.GetByCode(code)
 	if err != nil {
 		return nil, errors.New("could not get data by code")

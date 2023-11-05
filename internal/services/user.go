@@ -40,7 +40,7 @@ func NewUserServiceImpl(codeRepo models.CodeRepository, userRepo models.UserRepo
 
 func NewUser(Email, PasswordHash string) *models.User {
 	user := models.User{
-		Email:        Email,
+		Email:        normalizeEmail(Email),
 		PasswordHash: PasswordHash,
 		IsActive:     false,
 	}
@@ -54,6 +54,8 @@ func (us *UserServiceImpl) RegisterCustomer(email, password, clientIp string) er
 	if _, err := us.checkmailRPC.IsTrustEmail(email, clientIp); err != nil {
 		log.Printf("could not check email in blacklist: %s", err)
 	}
+	// normalizing email
+	email = normalizeEmail(email)
 	// getting user by email in local repository
 	user, _ := us.userRepo.GetByEmail(email)
 	// if user with this email already exists
@@ -137,6 +139,8 @@ func (us *UserServiceImpl) Confirm(code *models.Code) error {
 func (us *UserServiceImpl) ResetPassword(email, password string) error {
 	// hashing password
 	passwordHash, _ := us.hashPassword(password)
+	// normalizing email
+	email = normalizeEmail(email)
 	// getting user by email in local repository
 	user, err := us.userRepo.GetByEmail(email)
 	if err != nil {
@@ -173,6 +177,8 @@ func (us *UserServiceImpl) CheckPassword(user *models.User, password string) boo
 }
 
 func (us *UserServiceImpl) GetActiveUserByEmail(email string) (*models.User, error) {
+	// normalizing email
+	email = normalizeEmail(email)
 	user, err := us.userRepo.GetByEmail(email)
 	if err != nil {
 		return nil, errors.New("could not get user")
