@@ -20,8 +20,8 @@ func (app *Config) NewRouter() *echo.Echo {
 	e.POST("/v1/confirm", app.baseHandler.Confirm)
 	e.POST("/v1/reset-password", app.baseHandler.ResetPassword)
 
-	e.POST("/v1/sign-out", app.baseHandler.SignOut, middleware.AuthTokenMiddleware([]string{"customer", "support", "admin"}))
-	e.POST("/v1/token/validate", app.baseHandler.ValidateToken, middleware.AuthTokenMiddleware([]string{"customer", "support", "admin"}))
+	e.POST("/v1/sign-out", app.baseHandler.SignOut, middleware.AuthTokenMiddleware([]string{"customer", "staff"}))
+	e.POST("/v1/token/validate", app.baseHandler.ValidateToken, middleware.AuthTokenMiddleware([]string{"customer", "staff"}))
 
 	return e
 }

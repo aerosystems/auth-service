@@ -19,7 +19,7 @@ func NewCodeRepo(db *gorm.DB) *CodeRepo {
 	}
 }
 
-func (r *CodeRepo) GetById(Id uint) (*models.Code, error) {
+func (r *CodeRepo) GetById(Id int) (*models.Code, error) {
 	var code models.Code
 	result := r.db.Find(&code, Id)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -72,9 +72,9 @@ func (r *CodeRepo) GetByCode(value string) (*models.Code, error) {
 	return &code, nil
 }
 
-func (r *CodeRepo) GetLastIsActiveCode(UserID uint, Action string) (*models.Code, error) {
+func (r *CodeRepo) GetLastIsActiveCode(UserId int, Action string) (*models.Code, error) {
 	var code models.Code
-	result := r.db.Where("user_id = ? AND action = ?", UserID, Action).First(&code)
+	result := r.db.Where("user_id = ? AND action = ?", UserId, Action).First(&code)
 	if result.Error != nil {
 		return nil, result.Error
 	}

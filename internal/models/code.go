@@ -3,10 +3,10 @@ package models
 import "time"
 
 type Code struct {
-	Id        uint      `json:"id" gorm:"primaryKey;unique;autoIncrement"`
+	Id        int       `json:"id" gorm:"primaryKey;unique;autoIncrement"`
 	Code      string    `json:"code"`
-	UserID    int       `json:"userId"`
-	User      User      `json:"user" gorm:"foreignKey:UserID"` // Relation to User [Belongs To Association]
+	UserId    int       `json:"userId"`
+	User      User      `json:"user" gorm:"foreignKey:UserId"` // Relation to User [Belongs To Association]
 	Action    string    `json:"action"`
 	Data      string    `json:"data"`
 	IsUsed    bool      `json:"isUsed"`
@@ -16,9 +16,9 @@ type Code struct {
 }
 
 type CodeRepository interface {
-	GetById(Id uint) (*Code, error)
+	GetById(Id int) (*Code, error)
 	GetByCode(value string) (*Code, error)
-	GetLastIsActiveCode(UserId uint, Action string) (*Code, error)
+	GetLastIsActiveCode(UserId int, Action string) (*Code, error)
 	Create(code *Code) error
 	Update(code *Code) error
 	UpdateWithAssociations(code *Code) error

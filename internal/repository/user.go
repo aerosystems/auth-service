@@ -16,7 +16,7 @@ func NewUserRepo(db *gorm.DB) *UserRepo {
 	}
 }
 
-func (r *UserRepo) GetById(Id uint) (*models.User, error) {
+func (r *UserRepo) GetById(Id int) (*models.User, error) {
 	var user models.User
 	result := r.db.Find(&user, Id)
 	if result.Error != nil {

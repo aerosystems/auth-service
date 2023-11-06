@@ -6,7 +6,7 @@ import (
 )
 
 type User struct {
-	Id           uint      `json:"-" gorm:"primaryKey;unique;autoIncrement"`
+	Id           int       `json:"-" gorm:"primaryKey;unique;autoIncrement"`
 	Uuid         uuid.UUID `json:"uuid" gorm:"unique"`
 	Email        string    `json:"email" gorm:"unique"`
 	PasswordHash string    `json:"-"`
@@ -18,7 +18,7 @@ type User struct {
 }
 
 type UserRepository interface {
-	GetById(Id uint) (*User, error)
+	GetById(Id int) (*User, error)
 	GetByUuid(Uuid string) (*User, error)
 	GetByEmail(Email string) (*User, error)
 	GetByGoogleId(GoogleId string) (*User, error)
