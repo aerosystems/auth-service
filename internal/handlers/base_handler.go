@@ -35,7 +35,7 @@ type RefreshTokenRequestBody struct {
 }
 
 type CodeRequestBody struct {
-	Code string `json:"code" validate:"required,number,len=6" example:"012345"`
+	Code string `json:"code" validate:"required,numeric,len=6" example:"012345"`
 }
 
 type UserRequestBody struct {
