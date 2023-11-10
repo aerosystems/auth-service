@@ -167,12 +167,12 @@ func (r *TokenServiceImpl) DropCacheTokens(accessTokenClaims AccessTokenClaims) 
 }
 
 // createCacheKey function that will be used to save the JWTs metadata in Redis
-func (r *TokenServiceImpl) createCacheKey(userID int, td *TokenDetails) error {
+func (r *TokenServiceImpl) createCacheKey(userId int, td *TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
 	rt := time.Unix(td.RtExpires, 0) //converting Unix to UTC(to Time object)
 	now := time.Now()
 	cacheJSON, err := json.Marshal(AccessTokenCache{
-		UserId:      userID,
+		UserId:      userId,
 		RefreshUUID: td.RefreshUuid.String(),
 	})
 	if err != nil {
@@ -181,7 +181,7 @@ func (r *TokenServiceImpl) createCacheKey(userID int, td *TokenDetails) error {
 	if err := r.cache.Set(td.AccessUuid.String(), cacheJSON, at.Sub(now)).Err(); err != nil {
 		return err
 	}
-	if err := r.cache.Set(td.RefreshUuid.String(), strconv.Itoa(userID), rt.Sub(now)).Err(); err != nil {
+	if err := r.cache.Set(td.RefreshUuid.String(), strconv.Itoa(userId), rt.Sub(now)).Err(); err != nil {
 		return err
 	}
 	return nil

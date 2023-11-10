@@ -404,8 +404,6 @@ const docTemplate = `{
             "properties": {
                 "code": {
                     "type": "string",
-                    "maxLength": 6,
-                    "minLength": 6,
                     "example": "012345"
                 }
             }
@@ -445,6 +443,10 @@ const docTemplate = `{
         },
         "handlers.TokensResponseBody": {
             "type": "object",
+            "required": [
+                "accessToken",
+                "refreshToken"
+            ],
             "properties": {
                 "accessToken": {
                     "type": "string",

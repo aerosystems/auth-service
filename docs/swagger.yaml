@@ -4,8 +4,6 @@ definitions:
     properties:
       code:
         example: "012345"
-        maxLength: 6
-        minLength: 6
         type: string
     required:
     - code
@@ -40,6 +38,9 @@ definitions:
       refreshToken:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
         type: string
+    required:
+    - accessToken
+    - refreshToken
     type: object
   handlers.UserRequestBody:
     properties:
