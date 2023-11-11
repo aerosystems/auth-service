@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/services"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -11,7 +12,7 @@ import (
 	"time"
 )
 
-func AuthTokenMiddleware(roles []string) echo.MiddlewareFunc {
+func AuthTokenMiddleware(roles ...models.KindRole) echo.MiddlewareFunc {
 	AuthorizationConfig := echojwt.Config{
 		SigningKey:     []byte(os.Getenv("ACCESS_SECRET")),
 		ParseTokenFunc: parseToken,

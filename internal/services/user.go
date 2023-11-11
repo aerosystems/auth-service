@@ -108,12 +108,12 @@ func (us *UserServiceImpl) RegisterCustomer(email, password, clientIp string) er
 func (us *UserServiceImpl) Confirm(code *models.Code) error {
 	switch code.Action {
 	case "registration":
-		uuid, err := us.customerRPC.CreateCustomer()
+		userId, err := us.customerRPC.CreateCustomer()
 		if err != nil {
 			return fmt.Errorf("could not activate user: %s", err.Error())
 		}
 		code.IsUsed = true
-		code.User.Uuid = uuid
+		code.User.UserId = userId
 		code.User.IsActive = true
 		if err := us.codeRepo.UpdateWithAssociations(code); err != nil {
 			return errors.New("could not confirm registration")
@@ -121,11 +121,11 @@ func (us *UserServiceImpl) Confirm(code *models.Code) error {
 	case "reset_password":
 		if !code.User.IsActive {
 			code.User.IsActive = true
-			uuid, err := us.customerRPC.CreateCustomer()
+			userId, err := us.customerRPC.CreateCustomer()
 			if err != nil {
 				return fmt.Errorf("could not activate user: %s", err.Error())
 			}
-			code.User.Uuid = uuid
+			code.User.UserId = userId
 		}
 		code.IsUsed = true
 		code.User.PasswordHash = code.Data

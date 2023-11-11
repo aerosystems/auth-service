@@ -25,9 +25,9 @@ func (r *UserRepo) GetById(Id int) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *UserRepo) GetByUuid(Uuid string) (*models.User, error) {
+func (r *UserRepo) GetByEmail(Email string) (*models.User, error) {
 	var user models.User
-	result := r.db.Where("uuid = ?", Uuid).First(&user)
+	result := r.db.Where("email = ?", Email).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -37,9 +37,9 @@ func (r *UserRepo) GetByUuid(Uuid string) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *UserRepo) GetByEmail(Email string) (*models.User, error) {
+func (r *UserRepo) GetByUserId(UserId int) (*models.User, error) {
 	var user models.User
-	result := r.db.Where("email = ?", Email).First(&user)
+	result := r.db.Where("user_id = ?", UserId).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

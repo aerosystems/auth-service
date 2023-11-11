@@ -2,6 +2,7 @@ package services
 
 import (
 	"encoding/json"
+	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/go-redis/redis/v7"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -21,18 +22,18 @@ type TokenDetails struct {
 }
 
 type AccessTokenClaims struct {
-	AccessUUID string `json:"accessUuid"`
-	UserId     int    `json:"userId"`
-	UserRole   string `json:"userRole"`
-	Exp        int    `json:"exp"`
+	AccessUUID string          `json:"accessUuid"`
+	UserId     int             `json:"userId"`
+	UserRole   models.KindRole `json:"userRole"`
+	Exp        int             `json:"exp"`
 	jwt.StandardClaims
 }
 
 type RefreshTokenClaims struct {
-	RefreshUUID string `json:"refreshUuid"`
-	UserId      int    `json:"userId"`
-	UserRole    string `json:"userRole"`
-	Exp         int    `json:"exp"`
+	RefreshUUID string          `json:"refreshUuid"`
+	UserId      int             `json:"userId"`
+	UserRole    models.KindRole `json:"userRole"`
+	Exp         int             `json:"exp"`
 	jwt.StandardClaims
 }
 
@@ -42,7 +43,7 @@ type AccessTokenCache struct {
 }
 
 type TokenService interface {
-	CreateToken(userId int, userRole string) (*TokenDetails, error)
+	CreateToken(userId int, userRole models.KindRole) (*TokenDetails, error)
 	DecodeRefreshToken(tokenString string) (*RefreshTokenClaims, error)
 	DecodeAccessToken(tokenString string) (*AccessTokenClaims, error)
 	DropCacheTokens(accessTokenClaims AccessTokenClaims) error
@@ -78,7 +79,7 @@ func (r *TokenServiceImpl) GetCacheValue(UUID string) (*string, error) {
 }
 
 // CreateToken returns JWT Token
-func (r *TokenServiceImpl) CreateToken(userId int, userRole string) (*TokenDetails, error) {
+func (r *TokenServiceImpl) CreateToken(userId int, userRole models.KindRole) (*TokenDetails, error) {
 	td := &TokenDetails{}
 
 	accessExpMinutes, err := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))

@@ -1,12 +1,11 @@
 package RPCServices
 
 import (
-	"github.com/google/uuid"
 	"net/rpc"
 )
 
 type CustomerService interface {
-	CreateCustomer() (uuid.UUID, error)
+	CreateCustomer() (int, error)
 }
 
 type CustomerRPC struct {
@@ -20,13 +19,13 @@ func NewCustomerRPC(rpcClient *rpc.Client) *CustomerRPC {
 }
 
 type CustomerRPCPayload struct {
-	Uuid uuid.UUID
+	UserId int
 }
 
-func (c *CustomerRPC) CreateCustomer() (uuid.UUID, error) {
+func (c *CustomerRPC) CreateCustomer() (int, error) {
 	result := CustomerRPCPayload{}
 	if err := c.rpcClient.Call("CustomerServer.CreateCustomer", nil, &result); err != nil {
-		return uuid.UUID{}, err
+		return 0, err
 	}
-	return result.Uuid, nil
+	return result.UserId, nil
 }
