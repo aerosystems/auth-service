@@ -42,7 +42,7 @@ func main() {
 	log := logger.NewLogger(os.Getenv("HOSTNAME"))
 
 	clientGORM := GormPostgres.NewClient(logrus.NewEntry(log.Logger))
-	_ = clientGORM.AutoMigrate(models.Code{})
+	_ = clientGORM.AutoMigrate(models.Code{}, models.User{})
 
 	clientREDIS := RedisClient.NewClient()
 

@@ -40,7 +40,7 @@ type CodeRequestBody struct {
 
 type UserRequestBody struct {
 	Email    string `json:"email" validate:"required,email" example:"example@gmail.com"`
-	Password string `json:"password" validate:"required,customPasswordValidator" example:"P@ssw0rd"`
+	Password string `json:"password" validate:"required,customPasswordRule" example:"P@ssw0rd"`
 }
 
 // Response is the type used for sending JSON around
