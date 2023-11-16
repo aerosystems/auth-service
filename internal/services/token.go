@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/go-redis/redis/v7"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -22,33 +21,33 @@ type TokenDetails struct {
 }
 
 type AccessTokenClaims struct {
-	AccessUUID string          `json:"accessUuid"`
-	UserId     int             `json:"userId"`
-	UserRole   models.KindRole `json:"userRole"`
-	Exp        int             `json:"exp"`
+	AccessUuid string `json:"accessUuid"`
+	UserUuid   string `json:"userUuid"`
+	UserRole   string `json:"userRole"`
+	Exp        int    `json:"exp"`
 	jwt.StandardClaims
 }
 
 type RefreshTokenClaims struct {
-	RefreshUUID string          `json:"refreshUuid"`
-	UserId      int             `json:"userId"`
-	UserRole    models.KindRole `json:"userRole"`
-	Exp         int             `json:"exp"`
+	RefreshUuid string `json:"refreshUuid"`
+	UserUuid    string `json:"userUuid"`
+	UserRole    string `json:"userRole"`
+	Exp         int    `json:"exp"`
 	jwt.StandardClaims
 }
 
 type AccessTokenCache struct {
-	UserId      int    `json:"userId"`
-	RefreshUUID string `json:"refreshUuid"`
+	UserUuid    string `json:"userUuid"`
+	RefreshUuid string `json:"refreshUuid"`
 }
 
 type TokenService interface {
-	CreateToken(userId int, userRole models.KindRole) (*TokenDetails, error)
+	CreateToken(userUuid string, userRole string) (*TokenDetails, error)
 	DecodeRefreshToken(tokenString string) (*RefreshTokenClaims, error)
 	DecodeAccessToken(tokenString string) (*AccessTokenClaims, error)
 	DropCacheTokens(accessTokenClaims AccessTokenClaims) error
-	DropCacheKey(UUID string) error
-	GetCacheValue(UUID string) (*string, error)
+	DropCacheKey(Uuid string) error
+	GetCacheValue(Uuid string) (*string, error)
 }
 
 type TokenServiceImpl struct {
@@ -62,16 +61,16 @@ func NewTokenServiceImpl(cache *redis.Client) *TokenServiceImpl {
 }
 
 // DropCacheKey function that will be used to drop the JWTs metadata from Redis
-func (r *TokenServiceImpl) DropCacheKey(UUID string) error {
-	err := r.cache.Del(UUID).Err()
+func (r *TokenServiceImpl) DropCacheKey(Uuid string) error {
+	err := r.cache.Del(Uuid).Err()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *TokenServiceImpl) GetCacheValue(UUID string) (*string, error) {
-	value, err := r.cache.Get(UUID).Result()
+func (r *TokenServiceImpl) GetCacheValue(Uuid string) (*string, error) {
+	value, err := r.cache.Get(Uuid).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +78,7 @@ func (r *TokenServiceImpl) GetCacheValue(UUID string) (*string, error) {
 }
 
 // CreateToken returns JWT Token
-func (r *TokenServiceImpl) CreateToken(userId int, userRole models.KindRole) (*TokenDetails, error) {
+func (r *TokenServiceImpl) CreateToken(userUuid string, userRole string) (*TokenDetails, error) {
 	td := &TokenDetails{}
 
 	accessExpMinutes, err := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))
@@ -100,7 +99,7 @@ func (r *TokenServiceImpl) CreateToken(userId int, userRole models.KindRole) (*T
 
 	atClaims := jwt.MapClaims{}
 	atClaims["accessUuid"] = td.AccessUuid.String()
-	atClaims["userId"] = userId
+	atClaims["userUuid"] = userUuid
 	atClaims["userRole"] = userRole
 	atClaims["exp"] = td.AtExpires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
@@ -110,7 +109,7 @@ func (r *TokenServiceImpl) CreateToken(userId int, userRole models.KindRole) (*T
 	}
 	rtClaims := jwt.MapClaims{}
 	rtClaims["refreshUuid"] = td.RefreshUuid.String()
-	rtClaims["userId"] = userId
+	rtClaims["userUuid"] = userUuid
 	rtClaims["userRole"] = userRole
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
@@ -118,8 +117,8 @@ func (r *TokenServiceImpl) CreateToken(userId int, userRole models.KindRole) (*T
 	if err != nil {
 		return nil, err
 	}
-	// add a refresh token UUID to cache
-	if err = r.createCacheKey(userId, td); err != nil {
+	// add a refresh token Uuid to cache
+	if err = r.createCacheKey(userUuid, td); err != nil {
 		return nil, err
 	}
 	return td, nil
@@ -148,19 +147,19 @@ func (r *TokenServiceImpl) DecodeAccessToken(tokenString string) (*AccessTokenCl
 }
 
 func (r *TokenServiceImpl) DropCacheTokens(accessTokenClaims AccessTokenClaims) error {
-	cacheJSON, _ := r.GetCacheValue(accessTokenClaims.AccessUUID)
+	cacheJSON, _ := r.GetCacheValue(accessTokenClaims.AccessUuid)
 	accessTokenCache := new(AccessTokenCache)
 	err := json.Unmarshal([]byte(*cacheJSON), accessTokenCache)
 	if err != nil {
 		return err
 	}
 	// drop refresh token from Redis cache
-	err = r.DropCacheKey(accessTokenCache.RefreshUUID)
+	err = r.DropCacheKey(accessTokenCache.RefreshUuid)
 	if err != nil {
 		return err
 	}
 	// drop access token from Redis cache
-	err = r.DropCacheKey(accessTokenClaims.AccessUUID)
+	err = r.DropCacheKey(accessTokenClaims.AccessUuid)
 	if err != nil {
 		return err
 	}
@@ -168,13 +167,13 @@ func (r *TokenServiceImpl) DropCacheTokens(accessTokenClaims AccessTokenClaims) 
 }
 
 // createCacheKey function that will be used to save the JWTs metadata in Redis
-func (r *TokenServiceImpl) createCacheKey(userId int, td *TokenDetails) error {
+func (r *TokenServiceImpl) createCacheKey(userUuid string, td *TokenDetails) error {
 	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
 	rt := time.Unix(td.RtExpires, 0) //converting Unix to UTC(to Time object)
 	now := time.Now()
 	cacheJSON, err := json.Marshal(AccessTokenCache{
-		UserId:      userId,
-		RefreshUUID: td.RefreshUuid.String(),
+		UserUuid:    userUuid,
+		RefreshUuid: td.RefreshUuid.String(),
 	})
 	if err != nil {
 		return err
@@ -182,7 +181,7 @@ func (r *TokenServiceImpl) createCacheKey(userId int, td *TokenDetails) error {
 	if err := r.cache.Set(td.AccessUuid.String(), cacheJSON, at.Sub(now)).Err(); err != nil {
 		return err
 	}
-	if err := r.cache.Set(td.RefreshUuid.String(), strconv.Itoa(userId), rt.Sub(now)).Err(); err != nil {
+	if err := r.cache.Set(td.RefreshUuid.String(), userUuid, rt.Sub(now)).Err(); err != nil {
 		return err
 	}
 	return nil

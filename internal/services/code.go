@@ -41,7 +41,7 @@ func (cs *CodeServiceImpl) GetCode(code string) (*models.Code, error) {
 	return codeObj, nil
 }
 
-func NewCode(user models.User, Action string, Data string) *models.Code {
+func NewCode(user models.User, Action models.KindCode, Data string) *models.Code {
 	codeExpMinutes, _ := strconv.Atoi(os.Getenv("CODE_EXP_MINUTES"))
 
 	code := models.Code{

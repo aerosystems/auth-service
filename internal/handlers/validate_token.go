@@ -19,7 +19,7 @@ import (
 func (h *BaseHandler) ValidateToken(c echo.Context) error {
 	// receive AccessToken Claims from context middleware
 	accessTokenClaims := c.Get("accessTokenClaims").(services.AccessTokenClaims)
-	if accessTokenClaims.UserId == 0 {
+	if len(accessTokenClaims.UserUuid) == 0 {
 		return h.ErrorResponse(c, http.StatusUnauthorized, "invalid token", errors.New("invalid token"))
 	}
 	return h.SuccessResponse(c, http.StatusNoContent, "", nil)

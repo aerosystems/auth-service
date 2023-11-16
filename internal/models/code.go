@@ -1,18 +1,29 @@
 package models
 
-import "time"
+import (
+	"gorm.io/gorm"
+	"time"
+)
+
+type KindCode string
+
+const (
+	Registration  KindCode = "registration"
+	ResetPassword KindCode = "resetPassword"
+)
 
 type Code struct {
-	Id        int       `json:"id" gorm:"primaryKey;unique;autoIncrement"`
+	gorm.Model
+	Id        int       `json:"-" gorm:"primaryKey;unique;autoIncrement"`
 	Code      string    `json:"code"`
-	UserId    int       `json:"userId"`
-	User      User      `json:"user" gorm:"foreignKey:UserId"` // Relation to User [Belongs To Association]
-	Action    string    `json:"action"`
-	Data      string    `json:"data"`
-	IsUsed    bool      `json:"isUsed"`
-	ExpireAt  time.Time `json:"expireAt"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	UserId    int       `json:"-"`
+	User      User      `json:"-" gorm:"foreignKey:UserId"`
+	Action    KindCode  `json:"-"`
+	Data      string    `json:"-"`
+	IsUsed    bool      `json:"-"`
+	ExpireAt  time.Time `json:"-"`
+	CreatedAt time.Time `json:"-"`
+	UpdatedAt time.Time `json:"-"`
 }
 
 type CodeRepository interface {

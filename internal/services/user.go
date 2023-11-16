@@ -6,6 +6,7 @@ import (
 	"github.com/aerosystems/auth-service/internal/helpers"
 	"github.com/aerosystems/auth-service/internal/models"
 	RPCServices "github.com/aerosystems/auth-service/internal/rpc_services"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"os"
@@ -41,6 +42,7 @@ func NewUserServiceImpl(codeRepo models.CodeRepository, userRepo models.UserRepo
 func NewUser(Email, PasswordHash string) *models.User {
 	user := models.User{
 		Email:        normalizeEmail(Email),
+		Uuid:         uuid.New(),
 		PasswordHash: PasswordHash,
 		IsActive:     false,
 	}
@@ -71,7 +73,7 @@ func (us *UserServiceImpl) RegisterCustomer(email, password, clientIp string) er
 			code, _ := us.codeRepo.GetLastIsActiveCode(user.Id, "registration")
 			if code == nil {
 				// generating confirmation code
-				codeObj := NewCode(*user, "registration", "")
+				codeObj := NewCode(*user, models.Registration, "")
 				if err := us.codeRepo.Create(codeObj); err != nil {
 					return errors.New("could not gen new code")
 				}
@@ -90,11 +92,12 @@ func (us *UserServiceImpl) RegisterCustomer(email, password, clientIp string) er
 	}
 	// creating new user in local repository
 	newUser := NewUser(email, passwordHash)
+	newUser.Role = models.Customer
 	if err := us.userRepo.Create(newUser); err != nil {
 		return fmt.Errorf("could not create new user: %s", err.Error())
 	}
 	// generating confirmation code
-	newCode := NewCode(*newUser, "registration", "")
+	newCode := NewCode(*newUser, models.Registration, "")
 	if err := us.codeRepo.Create(newCode); err != nil {
 		return errors.New("could not gen new code")
 	}
@@ -107,25 +110,25 @@ func (us *UserServiceImpl) RegisterCustomer(email, password, clientIp string) er
 
 func (us *UserServiceImpl) Confirm(code *models.Code) error {
 	switch code.Action {
-	case "registration":
-		userId, err := us.customerRPC.CreateCustomer()
+	case models.Registration:
+		uuid, err := us.customerRPC.CreateCustomer()
 		if err != nil {
 			return fmt.Errorf("could not activate user: %s", err.Error())
 		}
 		code.IsUsed = true
-		code.User.UserId = userId
+		code.User.Uuid = uuid
 		code.User.IsActive = true
 		if err := us.codeRepo.UpdateWithAssociations(code); err != nil {
 			return errors.New("could not confirm registration")
 		}
-	case "reset_password":
+	case models.ResetPassword:
 		if !code.User.IsActive {
 			code.User.IsActive = true
-			userId, err := us.customerRPC.CreateCustomer()
+			uuid, err := us.customerRPC.CreateCustomer()
 			if err != nil {
 				return fmt.Errorf("could not activate user: %s", err.Error())
 			}
-			code.User.UserId = userId
+			code.User.Uuid = uuid
 		}
 		code.IsUsed = true
 		code.User.PasswordHash = code.Data
@@ -151,7 +154,7 @@ func (us *UserServiceImpl) ResetPassword(email, password string) error {
 		return errors.New("could not get last active code")
 	}
 	if code == nil || code.IsUsed {
-		newCode := NewCode(*user, "reset_password", passwordHash)
+		newCode := NewCode(*user, models.ResetPassword, passwordHash)
 		if err := us.codeRepo.Create(newCode); err != nil {
 			return errors.New("could not gen new code")
 		}

@@ -26,7 +26,7 @@ func (h *BaseHandler) RefreshToken(c echo.Context) error {
 	if err != nil {
 		return h.ErrorResponse(c, http.StatusUnauthorized, "invalid refresh token", err)
 	}
-	ts, err := h.tokenService.CreateToken(refreshTokenClaims.UserId, refreshTokenClaims.UserRole)
+	ts, err := h.tokenService.CreateToken(refreshTokenClaims.UserUuid, refreshTokenClaims.UserRole)
 	if err != nil {
 		return h.ErrorResponse(c, http.StatusInternalServerError, "could not create a pair of JWT tokens", err)
 	}
