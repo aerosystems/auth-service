@@ -46,7 +46,7 @@ func AuthTokenMiddleware(roles ...models.KindRole) echo.MiddlewareFunc {
 
 			roleFound := false
 			for _, role := range roles {
-				if accessTokenClaims.UserRole == role {
+				if accessTokenClaims.UserRole == role.String() {
 					roleFound = true
 					break
 				}

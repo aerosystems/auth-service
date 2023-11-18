@@ -1,8 +1,8 @@
 package RPCServices
 
 import (
+	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 	"github.com/google/uuid"
-	"net/rpc"
 )
 
 type CustomerService interface {
@@ -10,10 +10,10 @@ type CustomerService interface {
 }
 
 type CustomerRPC struct {
-	rpcClient *rpc.Client
+	rpcClient *RPCClient.ReconnectRPCClient
 }
 
-func NewCustomerRPC(rpcClient *rpc.Client) *CustomerRPC {
+func NewCustomerRPC(rpcClient *RPCClient.ReconnectRPCClient) *CustomerRPC {
 	return &CustomerRPC{
 		rpcClient: rpcClient,
 	}

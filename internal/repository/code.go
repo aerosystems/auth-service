@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/aerosystems/auth-service/internal/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"os"
 	"strconv"
 	"time"
@@ -65,7 +66,7 @@ func (r *CodeRepo) Delete(code *models.Code) error {
 
 func (r *CodeRepo) GetByCode(value string) (*models.Code, error) {
 	var code models.Code
-	result := r.db.Where("code = ?", value).First(&code)
+	result := r.db.Preload(clause.Associations).Where("code = ?", value).Find(&code)
 	if result.Error != nil {
 		return nil, result.Error
 	}

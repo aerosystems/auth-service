@@ -37,7 +37,7 @@ func (h *BaseHandler) SignIn(c echo.Context) error {
 	if !h.userService.CheckPassword(user, requestPayload.Password) {
 		return h.ErrorResponse(c, http.StatusUnauthorized, "invalid password", err)
 	}
-	ts, err := h.tokenService.CreateToken(user.Uuid.String(), user.Role)
+	ts, err := h.tokenService.CreateToken(user.Uuid.String(), user.Role.String())
 	if err != nil {
 		return h.ErrorResponse(c, http.StatusInternalServerError, "could not create a pair of JWT tokens", err)
 	}

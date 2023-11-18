@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-type KindRole string
-
 const (
 	Customer KindRole = "customer"
 	Staff    KindRole = "staff"

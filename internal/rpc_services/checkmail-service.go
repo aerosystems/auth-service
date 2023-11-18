@@ -2,7 +2,7 @@ package RPCServices
 
 import (
 	"errors"
-	"net/rpc"
+	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 )
 
 type CheckmailService interface {
@@ -10,7 +10,7 @@ type CheckmailService interface {
 }
 
 type CheckmailRPC struct {
-	rpcClient *rpc.Client
+	rpcClient *RPCClient.ReconnectRPCClient
 }
 
 type InspectRPCPayload struct {
@@ -18,7 +18,7 @@ type InspectRPCPayload struct {
 	ClientIp string
 }
 
-func NewCheckmailRPC(rpcClient *rpc.Client) *CheckmailRPC {
+func NewCheckmailRPC(rpcClient *RPCClient.ReconnectRPCClient) *CheckmailRPC {
 	return &CheckmailRPC{
 		rpcClient: rpcClient,
 	}

@@ -1,16 +1,18 @@
 package RPCServices
 
-import "net/rpc"
+import (
+	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
+)
 
 type MailService interface {
 	SendEmail(to, subject, body string) error
 }
 
 type MailRPC struct {
-	rpcClient *rpc.Client
+	rpcClient *RPCClient.ReconnectRPCClient
 }
 
-func NewMailRPC(rpcClient *rpc.Client) *MailRPC {
+func NewMailRPC(rpcClient *RPCClient.ReconnectRPCClient) *MailRPC {
 	return &MailRPC{
 		rpcClient: rpcClient,
 	}
