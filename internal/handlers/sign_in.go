@@ -34,7 +34,7 @@ func (h *BaseHandler) SignIn(c echo.Context) error {
 	if err != nil {
 		return h.ErrorResponse(c, http.StatusNotFound, "user not found", err)
 	}
-	if !h.userService.CheckPassword(user, requestPayload.Password) {
+	if _, err := h.userService.CheckPassword(user, requestPayload.Password); err != nil {
 		return h.ErrorResponse(c, http.StatusUnauthorized, "invalid password", err)
 	}
 	ts, err := h.tokenService.CreateToken(user.Uuid.String(), user.Role.String())

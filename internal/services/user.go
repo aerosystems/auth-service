@@ -17,7 +17,7 @@ type UserService interface {
 	RegisterCustomer(email, password, clientIp string) error
 	Confirm(code *models.Code) error
 	ResetPassword(email, password string) error
-	CheckPassword(user *models.User, password string) bool
+	CheckPassword(user *models.User, password string) (bool, error)
 	GetActiveUserByEmail(email string) (*models.User, error)
 }
 
@@ -171,12 +171,11 @@ func (us *UserServiceImpl) ResetPassword(email, password string) error {
 	return nil
 }
 
-func (us *UserServiceImpl) CheckPassword(user *models.User, password string) bool {
-	passwordHash, _ := us.hashPassword(password)
-	if passwordHash != user.PasswordHash {
-		return false
+func (us *UserServiceImpl) CheckPassword(user *models.User, password string) (bool, error) {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		return false, errors.New("invalid password")
 	}
-	return true
+	return true, nil
 }
 
 func (us *UserServiceImpl) GetActiveUserByEmail(email string) (*models.User, error) {
