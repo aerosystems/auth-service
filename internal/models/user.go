@@ -20,6 +20,7 @@ type User struct {
 type UserRepository interface {
 	GetById(Id int) (*User, error)
 	GetByUserId(UserId int) (*User, error)
+	GetByUuid(Uuid uuid.UUID) (*User, error)
 	GetByEmail(Email string) (*User, error)
 	GetByGoogleId(GoogleId string) (*User, error)
 	Create(user *User) error

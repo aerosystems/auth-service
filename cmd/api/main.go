@@ -16,6 +16,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
 	"os"
+	"strconv"
 )
 
 const webPort = 80
@@ -59,14 +60,21 @@ func main() {
 	userRepo := repository.NewUserRepo(clientGORM)
 
 	userService := services.NewUserServiceImpl(codeRepo, userRepo, checkmailRPC, mailRPC, customerRPC)
-	tokenService := services.NewTokenServiceImpl(clientREDIS)
 	codeService := services.NewCodeServiceImpl(codeRepo)
+
+	accessExpMinutes, _ := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))
+	refreshExpMinutes, _ := strconv.Atoi(os.Getenv("REFRESH_EXP_MINUTES"))
+	tokenService := services.NewTokenServiceImpl(clientREDIS, os.Getenv("ACCESS_SECRET"), os.Getenv("REFRESH_SECRET"), accessExpMinutes, refreshExpMinutes)
 
 	baseHandler := handlers.NewBaseHandler(os.Getenv("APP_ENV"), log.Logger, tokenService, userService, codeService)
 
-	app := NewConfig(baseHandler, tokenService)
+	oauthMiddleware := middleware.NewOAuthMiddlewareImpl(tokenService)
+	basicAuthMiddleware := middleware.NewBasicAuthMiddlewareImpl(os.Getenv("BASIC_AUTH_DOCS_USERNAME"), os.Getenv("BASIC_AUTH_DOCS_PASSWORD"))
+
+	app := NewConfig(baseHandler, oauthMiddleware, basicAuthMiddleware)
 	e := app.NewRouter()
-	middleware.AddMiddleware(e, log.Logger)
+	middleware.AddCORS(e)
+	middleware.AddLog(e, log.Logger)
 
 	validator := validator.New()
 	validator.RegisterValidation("customPasswordRule", validators.CustomPasswordRule)

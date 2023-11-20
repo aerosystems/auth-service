@@ -49,13 +49,6 @@ type Response struct {
 	Data    any    `json:"data,omitempty"`
 }
 
-// ErrorResponse is the type used for sending JSON around
-type ErrorResponse struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Error   any    `json:"error,omitempty"`
-}
-
 // SuccessResponse takes a response status code and arbitrary data and writes a json response to the client
 func (h *BaseHandler) SuccessResponse(c echo.Context, statusCode int, message string, data any) error {
 	payload := Response{

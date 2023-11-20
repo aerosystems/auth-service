@@ -5,8 +5,6 @@ import (
 	"github.com/go-redis/redis/v7"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-	"os"
-	"strconv"
 	"time"
 )
 
@@ -42,6 +40,7 @@ type AccessTokenCache struct {
 }
 
 type TokenService interface {
+	GetAccessSecret() string
 	CreateToken(userUuid string, userRole string) (*TokenDetails, error)
 	DecodeRefreshToken(tokenString string) (*RefreshTokenClaims, error)
 	DecodeAccessToken(tokenString string) (*AccessTokenClaims, error)
@@ -51,13 +50,25 @@ type TokenService interface {
 }
 
 type TokenServiceImpl struct {
-	cache *redis.Client
+	cache             *redis.Client
+	accessSecret      string
+	refreshSecret     string
+	accessExpMinutes  int
+	refreshExpMinutes int
 }
 
-func NewTokenServiceImpl(cache *redis.Client) *TokenServiceImpl {
+func NewTokenServiceImpl(cache *redis.Client, accessSecret string, refreshSecret string, accessExpMinutes int, refreshExpMinutes int) *TokenServiceImpl {
 	return &TokenServiceImpl{
-		cache: cache,
+		cache:             cache,
+		accessSecret:      accessSecret,
+		refreshSecret:     refreshSecret,
+		accessExpMinutes:  accessExpMinutes,
+		refreshExpMinutes: refreshExpMinutes,
 	}
+}
+
+func (r *TokenServiceImpl) GetAccessSecret() string {
+	return r.accessSecret
 }
 
 // DropCacheKey function that will be used to drop the JWTs metadata from Redis
@@ -69,6 +80,7 @@ func (r *TokenServiceImpl) DropCacheKey(Uuid string) error {
 	return nil
 }
 
+// GetCacheValue function that will be used to get the JWTs metadata from Redis
 func (r *TokenServiceImpl) GetCacheValue(Uuid string) (*string, error) {
 	value, err := r.cache.Get(Uuid).Result()
 	if err != nil {
@@ -80,21 +92,12 @@ func (r *TokenServiceImpl) GetCacheValue(Uuid string) (*string, error) {
 // CreateToken returns JWT Token
 func (r *TokenServiceImpl) CreateToken(userUuid string, userRole string) (*TokenDetails, error) {
 	td := &TokenDetails{}
+	var err error
 
-	accessExpMinutes, err := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))
-	if err != nil {
-		return nil, err
-	}
-
-	refreshExpMinutes, err := strconv.Atoi(os.Getenv("REFRESH_EXP_MINUTES"))
-	if err != nil {
-		return nil, err
-	}
-
-	td.AtExpires = time.Now().Add(time.Minute * time.Duration(accessExpMinutes)).Unix()
+	td.AtExpires = time.Now().Add(time.Minute * time.Duration(r.accessExpMinutes)).Unix()
 	td.AccessUuid = uuid.New()
 
-	td.RtExpires = time.Now().Add(time.Minute * time.Duration(refreshExpMinutes)).Unix()
+	td.RtExpires = time.Now().Add(time.Minute * time.Duration(r.refreshExpMinutes)).Unix()
 	td.RefreshUuid = uuid.New()
 
 	atClaims := jwt.MapClaims{}
@@ -103,7 +106,7 @@ func (r *TokenServiceImpl) CreateToken(userUuid string, userRole string) (*Token
 	atClaims["userRole"] = userRole
 	atClaims["exp"] = td.AtExpires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	td.AccessToken, err = at.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
+	td.AccessToken, err = at.SignedString([]byte(r.accessSecret))
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +116,7 @@ func (r *TokenServiceImpl) CreateToken(userUuid string, userRole string) (*Token
 	rtClaims["userRole"] = userRole
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
-	td.RefreshToken, err = rt.SignedString([]byte(os.Getenv("REFRESH_SECRET")))
+	td.RefreshToken, err = rt.SignedString([]byte(r.refreshSecret))
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +129,7 @@ func (r *TokenServiceImpl) CreateToken(userUuid string, userRole string) (*Token
 
 func (r *TokenServiceImpl) DecodeRefreshToken(tokenString string) (*RefreshTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &RefreshTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("REFRESH_SECRET")), nil
+		return []byte(r.refreshSecret), nil
 	})
 	if claims, ok := token.Claims.(*RefreshTokenClaims); ok && token.Valid {
 		return claims, nil
@@ -137,7 +140,7 @@ func (r *TokenServiceImpl) DecodeRefreshToken(tokenString string) (*RefreshToken
 
 func (r *TokenServiceImpl) DecodeAccessToken(tokenString string) (*AccessTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("ACCESS_SECRET")), nil
+		return []byte(r.accessSecret), nil
 	})
 	if claims, ok := token.Claims.(*AccessTokenClaims); ok && token.Valid {
 		return claims, nil

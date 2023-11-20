@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"github.com/aerosystems/auth-service/internal/models"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -40,6 +41,18 @@ func (r *UserRepo) GetByEmail(Email string) (*models.User, error) {
 func (r *UserRepo) GetByUserId(UserId int) (*models.User, error) {
 	var user models.User
 	result := r.db.Where("user_id = ?", UserId).First(&user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &user, nil
+}
+
+func (r *UserRepo) GetByUuid(Uuid uuid.UUID) (*models.User, error) {
+	var user models.User
+	result := r.db.Where("uuid = ?", Uuid.String()).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

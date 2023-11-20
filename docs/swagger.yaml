@@ -8,14 +8,6 @@ definitions:
     required:
     - code
     type: object
-  handlers.ErrorResponse:
-    properties:
-      code:
-        type: integer
-      error: {}
-      message:
-        type: string
-    type: object
   handlers.RefreshTokenRequestBody:
     properties:
       refreshToken:
@@ -54,6 +46,23 @@ definitions:
     - email
     - password
     type: object
+  models.KindRole:
+    enum:
+    - customer
+    - staff
+    type: string
+    x-enum-varnames:
+    - CustomerRole
+    - StaffRole
+  models.User:
+    properties:
+      email:
+        type: string
+      role:
+        $ref: '#/definitions/models.KindRole'
+      uuid:
+        type: string
+    type: object
 host: gw.verifire.com/auth
 info:
   contact:
@@ -88,15 +97,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       summary: confirm registration/reset password with 6-digit code from email/sms
       tags:
       - auth
@@ -128,15 +137,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       summary: resetting password
       tags:
       - auth
@@ -174,23 +183,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       summary: login user by credentials
       tags:
       - auth
@@ -208,11 +217,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       security:
       - BearerAuth: []
       summary: logout user
@@ -246,15 +255,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       summary: registration user by credentials
       tags:
       - auth
@@ -284,19 +293,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       summary: refresh a pair of JWT tokens
       tags:
       - auth
@@ -314,12 +323,46 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       security:
       - BearerAuth: []
       summary: validate token
       tags:
       - api-gateway-special
+  /v1/users:
+    get:
+      consumes:
+      - application/json
+      description: Get user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      security:
+      - BearerAuth: []
+      summary: Get user
+      tags:
+      - users
 schemes:
 - https
 securityDefinitions:

@@ -4,16 +4,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
-func AddMiddleware(e *echo.Echo, log *logrus.Logger) {
-	DefaultCORSConfig := middleware.CORSConfig{
-		Skipper:      middleware.DefaultSkipper,
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodOptions},
-	}
-	e.Use(middleware.CORSWithConfig(DefaultCORSConfig))
+func AddLog(e *echo.Echo, log *logrus.Logger) {
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
 		LogStatus: true,

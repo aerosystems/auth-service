@@ -3,8 +3,8 @@ package models
 type KindRole string
 
 const (
-	Customer KindRole = "customer"
-	Staff    KindRole = "staff"
+	CustomerRole KindRole = "customer"
+	StaffRole    KindRole = "staff"
 )
 
 func (k KindRole) String() string {

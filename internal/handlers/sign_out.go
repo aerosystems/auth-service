@@ -13,8 +13,8 @@ import (
 // @Produce application/json
 // @Security BearerAuth
 // @Success 200 {object} handlers.Response
-// @Failure 401 {object} handlers.ErrorResponse
-// @Failure 500 {object} handlers.ErrorResponse
+// @Failure 401 {object} handlers.Response
+// @Failure 500 {object} handlers.Response
 // @Router /v1/sign-out [post]
 func (h *BaseHandler) SignOut(c echo.Context) error {
 	accessTokenClaims := c.Get("accessTokenClaims").(*services.AccessTokenClaims)

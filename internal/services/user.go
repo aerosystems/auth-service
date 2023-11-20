@@ -19,6 +19,7 @@ type UserService interface {
 	ResetPassword(email, password string) error
 	CheckPassword(user *models.User, password string) (bool, error)
 	GetActiveUserByEmail(email string) (*models.User, error)
+	GetUserByUuid(uuid string) (*models.User, error)
 }
 
 type UserServiceImpl struct {
@@ -47,6 +48,18 @@ func NewUser(Email, PasswordHash string) *models.User {
 		IsActive:     false,
 	}
 	return &user
+}
+
+func (us *UserServiceImpl) GetUserByUuid(uuidStr string) (*models.User, error) {
+	uuid, err := uuid.Parse(uuidStr)
+	if err != nil {
+		return nil, errors.New("invalid uuid")
+	}
+	user, err := us.userRepo.GetByUuid(uuid)
+	if err != nil {
+		return nil, errors.New("could not get user")
+	}
+	return user, nil
 }
 
 func (us *UserServiceImpl) RegisterCustomer(email, password, clientIp string) error {
@@ -92,7 +105,7 @@ func (us *UserServiceImpl) RegisterCustomer(email, password, clientIp string) er
 	}
 	// creating new user in local repository
 	newUser := NewUser(email, passwordHash)
-	newUser.Role = models.Customer
+	newUser.Role = models.CustomerRole
 	if err := us.userRepo.Create(newUser); err != nil {
 		return fmt.Errorf("could not create new user: %s", err.Error())
 	}

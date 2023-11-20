@@ -12,10 +12,10 @@ import (
 // @Produce application/json
 // @Param login body handlers.RefreshTokenRequestBody true "raw request body, should contain Refresh Token"
 // @Success 200 {object} Response{data=handlers.TokensResponseBody}
-// @Failure 400 {object} handlers.ErrorResponse
-// @Failure 401 {object} handlers.ErrorResponse
-// @Failure 422 {object} handlers.ErrorResponse
-// @Failure 500 {object} handlers.ErrorResponse
+// @Failure 400 {object} handlers.Response
+// @Failure 401 {object} handlers.Response
+// @Failure 422 {object} handlers.Response
+// @Failure 500 {object} handlers.Response
 // @Router /v1/token/refresh [post]
 func (h *BaseHandler) RefreshToken(c echo.Context) error {
 	var requestPayload RefreshTokenRequestBody

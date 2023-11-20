@@ -18,9 +18,9 @@ import (
 // @Produce application/json
 // @Param registration body handlers.UserRequestBody true "raw request body"
 // @Success 201 {object} handlers.Response
-// @Failure 400 {object} handlers.ErrorResponse
-// @Failure 422 {object} handlers.ErrorResponse
-// @Failure 500 {object} handlers.ErrorResponse
+// @Failure 400 {object} handlers.Response
+// @Failure 422 {object} handlers.Response
+// @Failure 500 {object} handlers.Response
 // @Router /v1/sign-up [post]
 func (h *BaseHandler) SignUp(c echo.Context) error {
 	requestPayload := new(UserRequestBody)

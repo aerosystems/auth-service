@@ -19,11 +19,11 @@ import (
 // @Produce application/json
 // @Param login body handlers.UserRequestBody true "raw request body"
 // @Success 200 {object} handlers.Response{data=handlers.TokensResponseBody}
-// @Failure 400 {object} handlers.ErrorResponse
-// @Failure 401 {object} handlers.ErrorResponse
-// @Failure 404 {object} handlers.ErrorResponse
-// @Failure 422 {object} handlers.ErrorResponse
-// @Failure 500 {object} handlers.ErrorResponse
+// @Failure 400 {object} handlers.Response
+// @Failure 401 {object} handlers.Response
+// @Failure 404 {object} handlers.Response
+// @Failure 422 {object} handlers.Response
+// @Failure 500 {object} handlers.Response
 // @Router /v1/sign-in [post]
 func (h *BaseHandler) SignIn(c echo.Context) error {
 	var requestPayload UserRequestBody

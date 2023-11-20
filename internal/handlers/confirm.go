@@ -12,9 +12,9 @@ import (
 // @Produce application/json
 // @Param code body handlers.CodeRequestBody true "raw request body"
 // @Success 200 {object} handlers.Response
-// @Failure 400 {object} handlers.ErrorResponse
-// @Failure 422 {object} handlers.ErrorResponse
-// @Failure 500 {object} handlers.ErrorResponse
+// @Failure 400 {object} handlers.Response
+// @Failure 422 {object} handlers.Response
+// @Failure 500 {object} handlers.Response
 // @Router /v1/confirm [post]
 func (h *BaseHandler) Confirm(c echo.Context) error {
 	var requestPayload CodeRequestBody
