@@ -18,8 +18,7 @@ import (
 // @Router /v1/sign-out [post]
 func (h *BaseHandler) SignOut(c echo.Context) error {
 	accessTokenClaims := c.Get("accessTokenClaims").(*services.AccessTokenClaims)
-	err := h.tokenService.DropCacheTokens(*accessTokenClaims)
-	if err != nil {
+	if err := h.tokenService.DropCacheTokens(*accessTokenClaims); err != nil {
 		return h.ErrorResponse(c, http.StatusInternalServerError, "could not logout user", err)
 	}
 	return h.SuccessResponse(c, http.StatusOK, "user was successfully logged out", nil)

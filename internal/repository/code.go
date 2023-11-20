@@ -67,6 +67,9 @@ func (r *CodeRepo) Delete(code *models.Code) error {
 func (r *CodeRepo) GetByCode(value string) (*models.Code, error) {
 	var code models.Code
 	result := r.db.Preload(clause.Associations).Where("code = ?", value).Find(&code)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -75,7 +78,10 @@ func (r *CodeRepo) GetByCode(value string) (*models.Code, error) {
 
 func (r *CodeRepo) GetLastIsActiveCode(UserId int, Action string) (*models.Code, error) {
 	var code models.Code
-	result := r.db.Where("user_id = ? AND action = ?", UserId, Action).First(&code)
+	result := r.db.Where("user_id = ? AND action = ? AND is_used = ?", UserId, Action, false).First(&code)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if result.Error != nil {
 		return nil, result.Error
 	}

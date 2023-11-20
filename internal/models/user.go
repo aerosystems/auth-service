@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-const (
-	Customer KindRole = "customer"
-	Staff    KindRole = "staff"
-)
-
 type User struct {
 	Id           int       `json:"-" gorm:"primaryKey;unique;autoIncrement"`
 	Uuid         uuid.UUID `json:"uuid" gorm:"unique"`

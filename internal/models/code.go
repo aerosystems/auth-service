@@ -5,13 +5,6 @@ import (
 	"time"
 )
 
-type KindCode string
-
-const (
-	Registration  KindCode = "registration"
-	ResetPassword KindCode = "resetPassword"
-)
-
 type Code struct {
 	gorm.Model
 	Id        int       `json:"-" gorm:"primaryKey;unique;autoIncrement"`

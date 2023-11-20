@@ -22,7 +22,7 @@ func (app *Config) NewRouter() *echo.Echo {
 	e.POST("/v1/reset-password", app.baseHandler.ResetPassword)
 
 	e.POST("/v1/sign-out", app.baseHandler.SignOut, middleware.AuthTokenMiddleware(models.Customer, models.Staff))
-	e.POST("/v1/token/validate", app.baseHandler.ValidateToken, middleware.AuthTokenMiddleware(models.Customer, models.Staff))
+	e.GET("/v1/token/validate", app.baseHandler.ValidateToken, middleware.AuthTokenMiddleware(models.Customer, models.Staff))
 
 	return e
 }

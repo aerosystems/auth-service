@@ -153,9 +153,9 @@ func (us *UserServiceImpl) ResetPassword(email, password string) error {
 	if err != nil {
 		return errors.New("could not get last active code")
 	}
-	if code == nil || code.IsUsed {
-		newCode := NewCode(*user, models.ResetPassword, passwordHash)
-		if err := us.codeRepo.Create(newCode); err != nil {
+	if code == nil {
+		code = NewCode(*user, models.ResetPassword, passwordHash)
+		if err := us.codeRepo.Create(code); err != nil {
 			return errors.New("could not gen new code")
 		}
 	}
@@ -173,7 +173,7 @@ func (us *UserServiceImpl) ResetPassword(email, password string) error {
 
 func (us *UserServiceImpl) CheckPassword(user *models.User, password string) (bool, error) {
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return false, errors.New("invalid password")
+		return false, errors.New("invalid credentials")
 	}
 	return true, nil
 }
