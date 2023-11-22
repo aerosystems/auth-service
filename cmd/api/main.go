@@ -3,22 +3,27 @@ package main
 import (
 	"fmt"
 	"github.com/aerosystems/auth-service/internal/handlers"
+	"github.com/aerosystems/auth-service/internal/middleware"
 	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository"
+	RPCServices "github.com/aerosystems/auth-service/internal/rpc_services"
+	"github.com/aerosystems/auth-service/internal/services"
+	"github.com/aerosystems/auth-service/internal/validators"
 	GormPostgres "github.com/aerosystems/auth-service/pkg/gorm_postgres"
 	"github.com/aerosystems/auth-service/pkg/logger"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
-	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
+	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
+	"github.com/go-playground/validator/v10"
 	"github.com/sirupsen/logrus"
-	"net/http"
 	"os"
+	"strconv"
 )
 
-const webPort = "80"
+const webPort = 80
 
 // @title Auth Service
-// @version 1.0.7
-// @description A mandatory part of any microservice infrastructure of a modern WEB application
+// @version 1.0.8
+// @description A mandatory part of any microservice infrastructure of a modern WEB application, which is responsible for user authentication and authorization.
 
 // @contact.name Artem Kostenko
 // @contact.url https://github.com/aerosystems
@@ -38,34 +43,45 @@ func main() {
 	log := logger.NewLogger(os.Getenv("HOSTNAME"))
 
 	clientGORM := GormPostgres.NewClient(logrus.NewEntry(log.Logger))
-	clientGORM.AutoMigrate(models.User{}, models.Code{})
+	_ = clientGORM.AutoMigrate(models.Code{}, models.User{})
 
 	clientREDIS := RedisClient.NewClient()
 
-	userRepo := repository.NewUserRepo(clientGORM, clientREDIS)
+	checkmailClientRPC := RPCClient.NewClient("tcp", "checkmail-service:5001")
+	checkmailRPC := RPCServices.NewCheckmailRPC(checkmailClientRPC)
+
+	mailClientRPC := RPCClient.NewClient("tcp", "mail-service:5001")
+	mailRPC := RPCServices.NewMailRPC(mailClientRPC)
+
+	customerClientRPC := RPCClient.NewClient("tcp", "customer-service:5001")
+	customerRPC := RPCServices.NewCustomerRPC(customerClientRPC)
+
 	codeRepo := repository.NewCodeRepo(clientGORM)
+	userRepo := repository.NewUserRepo(clientGORM)
 
-	tokenService := TokenService.NewService(clientREDIS)
+	userService := services.NewUserServiceImpl(codeRepo, userRepo, checkmailRPC, mailRPC, customerRPC)
+	codeService := services.NewCodeServiceImpl(codeRepo)
 
-	app := Config{
-		BaseHandler: handlers.NewBaseHandler(
-			log.Logger,
-			userRepo,
-			codeRepo,
-			tokenService,
-		),
-		TokenService: tokenService,
-	}
+	accessExpMinutes, _ := strconv.Atoi(os.Getenv("ACCESS_EXP_MINUTES"))
+	refreshExpMinutes, _ := strconv.Atoi(os.Getenv("REFRESH_EXP_MINUTES"))
+	tokenService := services.NewTokenServiceImpl(clientREDIS, os.Getenv("ACCESS_SECRET"), os.Getenv("REFRESH_SECRET"), accessExpMinutes, refreshExpMinutes)
 
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(log.Logger),
-	}
+	baseHandler := handlers.NewBaseHandler(os.Getenv("APP_ENV"), log.Logger, tokenService, userService, codeService)
 
-	log.Infof("starting auth-service HTTP Server on port %s\n", webPort)
-	err := srv.ListenAndServe()
+	oauthMiddleware := middleware.NewOAuthMiddlewareImpl(tokenService)
+	basicAuthMiddleware := middleware.NewBasicAuthMiddlewareImpl(os.Getenv("BASIC_AUTH_DOCS_USERNAME"), os.Getenv("BASIC_AUTH_DOCS_PASSWORD"))
 
-	if err != nil {
-		log.Panic(err)
+	app := NewConfig(baseHandler, oauthMiddleware, basicAuthMiddleware)
+	e := app.NewRouter()
+	middleware.AddCORS(e)
+	middleware.AddLog(e, log.Logger)
+
+	validator := validator.New()
+	validator.RegisterValidation("customPasswordRule", validators.CustomPasswordRule)
+	e.Validator = &validators.CustomValidator{Validator: validator}
+
+	log.Infof("starting auth-service HTTP server on port %d\n", webPort)
+	if err := e.Start(fmt.Sprintf(":%d", webPort)); err != nil {
+		log.Fatal(err)
 	}
 }

@@ -5,50 +5,16 @@ definitions:
       code:
         example: "012345"
         type: string
-    type: object
-  handlers.ErrorResponse:
-    properties:
-      code:
-        type: integer
-      error: {}
-      message:
-        type: string
-    type: object
-  handlers.LoginRequestBody:
-    properties:
-      email:
-        example: example@gmail.com
-        type: string
-      password:
-        example: P@ssw0rd
-        type: string
+    required:
+    - code
     type: object
   handlers.RefreshTokenRequestBody:
     properties:
       refreshToken:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
         type: string
-    type: object
-  handlers.RegistrationRequestBody:
-    properties:
-      email:
-        example: example@gmail.com
-        type: string
-      password:
-        example: P@ssw0rd
-        type: string
-      role:
-        example: startup
-        type: string
-    type: object
-  handlers.ResetPasswordRequestBody:
-    properties:
-      email:
-        example: example@gmail.com
-        type: string
-      password:
-        example: P@ssw0rd
-        type: string
+    required:
+    - refreshToken
     type: object
   handlers.Response:
     properties:
@@ -64,6 +30,38 @@ definitions:
       refreshToken:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
         type: string
+    required:
+    - accessToken
+    - refreshToken
+    type: object
+  handlers.UserRequestBody:
+    properties:
+      email:
+        example: example@gmail.com
+        type: string
+      password:
+        example: P@ssw0rd
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.KindRole:
+    enum:
+    - customer
+    - staff
+    type: string
+    x-enum-varnames:
+    - CustomerRole
+    - StaffRole
+  models.User:
+    properties:
+      email:
+        type: string
+      role:
+        $ref: '#/definitions/models.KindRole'
+      uuid:
+        type: string
     type: object
 host: gw.verifire.com/auth
 info:
@@ -71,13 +69,204 @@ info:
     name: Artem Kostenko
     url: https://github.com/aerosystems
   description: A mandatory part of any microservice infrastructure of a modern WEB
-    application
+    application, which is responsible for user authentication and authorization.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: Auth Service
-  version: 1.0.7
+  version: 1.0.8
 paths:
+  /v1/confirm:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: raw request body
+        in: body
+        name: code
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CodeRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: confirm registration/reset password with 6-digit code from email/sms
+      tags:
+      - auth
+  /v1/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Password should contain:
+        - minimum of one small case letter
+        - minimum of one upper case letter
+        - minimum of one digit
+        - minimum of one special character
+        - minimum 8 characters length
+      parameters:
+      - description: raw request body
+        in: body
+        name: registration
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: resetting password
+      tags:
+      - auth
+  /v1/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Password should contain:
+        - minimum of one small case letter
+        - minimum of one upper case letter
+        - minimum of one digit
+        - minimum of one special character
+        - minimum 8 characters length
+        Response contain pair JWT tokens
+      parameters:
+      - description: raw request body
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handlers.TokensResponseBody'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: login user by credentials
+      tags:
+      - auth
+  /v1/sign-out:
+    post:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      security:
+      - BearerAuth: []
+      summary: logout user
+      tags:
+      - auth
+  /v1/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Password should contain:
+        - minimum of one small case letter
+        - minimum of one upper case letter
+        - minimum of one digit
+        - minimum of one special character
+        - minimum 8 characters length
+      parameters:
+      - description: raw request body
+        in: body
+        name: registration
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserRequestBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.Response'
+      summary: registration user by credentials
+      tags:
+      - auth
   /v1/token/refresh:
     post:
       consumes:
@@ -104,19 +293,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       summary: refresh a pair of JWT tokens
       tags:
       - auth
@@ -134,72 +323,17 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       security:
       - BearerAuth: []
       summary: validate token
       tags:
       - api-gateway-special
-  /v1/user/confirm-registration:
-    post:
+  /v1/users:
+    get:
       consumes:
       - application/json
-      parameters:
-      - description: raw request body
-        in: body
-        name: code
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.CodeRequestBody'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "410":
-          description: Gone
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: confirm registration/reset password with 6-digit code from email/sms
-      tags:
-      - auth
-  /v1/user/login:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        Password should contain:
-        - minimum of one small case letter
-        - minimum of one upper case letter
-        - minimum of one digit
-        - minimum of one special character
-        - minimum 8 characters length
-        Response contain pair JWT tokens, use /token/refresh for updating them
-      parameters:
-      - description: raw request body
-        in: body
-        name: login
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.LoginRequestBody'
+      description: Get user
       produces:
       - application/json
       responses:
@@ -210,147 +344,25 @@ paths:
             - $ref: '#/definitions/handlers.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/handlers.TokensResponseBody'
+                  $ref: '#/definitions/models.User'
               type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: login user by credentials
-      tags:
-      - auth
-  /v1/user/logout:
-    post:
-      consumes:
-      - application/json
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
           schema:
             $ref: '#/definitions/handlers.Response'
-        "401":
-          description: Unauthorized
+        "403":
+          description: Forbidden
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.Response'
       security:
       - BearerAuth: []
-      summary: logout user
+      summary: Get user
       tags:
-      - auth
-  /v1/user/register:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        Password should contain:
-        - minimum of one small case letter
-        - minimum of one upper case letter
-        - minimum of one digit
-        - minimum of one special character
-        - minimum 8 characters length
-      parameters:
-      - description: raw request body
-        in: body
-        name: registration
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.RegistrationRequestBody'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: registration user by credentials
-      tags:
-      - auth
-  /v1/user/reset-password:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        Password should contain:
-        - minimum of one small case letter
-        - minimum of one upper case letter
-        - minimum of one digit
-        - minimum of one special character
-        - minimum 8 characters length
-      parameters:
-      - description: raw request body
-        in: body
-        name: registration
-        required: true
-        schema:
-          $ref: '#/definitions/handlers.ResetPasswordRequestBody'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      summary: resetting password
-      tags:
-      - auth
+      - users
 schemes:
 - https
 securityDefinitions:

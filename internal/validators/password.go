@@ -2,10 +2,18 @@ package validators
 
 import (
 	"errors"
+	"github.com/go-playground/validator/v10"
 	"regexp"
 )
 
-func ValidatePassword(password string) error {
+func CustomPasswordRule(fl validator.FieldLevel) bool {
+	if err := validatePassword(fl.Field().String()); err != nil {
+		return false
+	}
+	return true
+}
+
+func validatePassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("password should be of 8 characters long")
 	}

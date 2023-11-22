@@ -1,13 +1,9 @@
 package handlers
 
 import (
-	"errors"
+	"github.com/labstack/echo/v4"
 	"net/http"
 )
-
-type RefreshTokenRequestBody struct {
-	RefreshToken string `json:"refreshToken" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
-}
 
 // RefreshToken godoc
 // @Summary refresh a pair of JWT tokens
@@ -16,51 +12,27 @@ type RefreshTokenRequestBody struct {
 // @Produce application/json
 // @Param login body handlers.RefreshTokenRequestBody true "raw request body, should contain Refresh Token"
 // @Success 200 {object} Response{data=handlers.TokensResponseBody}
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Failure 422 {object} ErrorResponse
-// @Failure 500 {object} ErrorResponse
+// @Failure 400 {object} handlers.Response
+// @Failure 401 {object} handlers.Response
+// @Failure 422 {object} handlers.Response
+// @Failure 500 {object} handlers.Response
 // @Router /v1/token/refresh [post]
-func (h *BaseHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+func (h *BaseHandler) RefreshToken(c echo.Context) error {
 	var requestPayload RefreshTokenRequestBody
-
-	if err := ReadRequest(w, r, &requestPayload); err != nil {
-		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422001, "could not read request body", err))
-		return
+	if err := c.Bind(&requestPayload); err != nil {
+		return h.ErrorResponse(c, http.StatusUnprocessableEntity, "could not read request body", err)
 	}
-
-	if requestPayload.RefreshToken == "" {
-		err := errors.New("refresh Token does not exists or empty")
-		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422013, err.Error(), err))
-		return
-	}
-
-	// validate & parse refresh token claims
 	refreshTokenClaims, err := h.tokenService.DecodeRefreshToken(requestPayload.RefreshToken)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusUnprocessableEntity, NewErrorPayload(422015, "could not validate & parse Refresh Token claims", err))
-		return
+		return h.ErrorResponse(c, http.StatusUnauthorized, "invalid refresh token", err)
 	}
-
-	// create pair JWT tokens
-	ts, err := h.tokenService.CreateToken(refreshTokenClaims.UserID, refreshTokenClaims.UserRole)
+	ts, err := h.tokenService.CreateToken(refreshTokenClaims.UserUuid, refreshTokenClaims.UserRole)
 	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500003, "could not to create a pair of JWT Tokens", err))
-		return
+		return h.ErrorResponse(c, http.StatusInternalServerError, "could not create a pair of JWT tokens", err)
 	}
-
-	// add refresh token UUID to cache
-	err = h.tokenService.CreateCacheKey(refreshTokenClaims.UserID, ts)
-	if err != nil {
-		_ = WriteResponse(w, http.StatusInternalServerError, NewErrorPayload(500004, "could not create Refresh Token", err))
-		return
-	}
-
 	tokens := TokensResponseBody{
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	}
-
-	_ = WriteResponse(w, http.StatusOK, NewResponsePayload("tokens successfully refreshed", tokens))
-	return
+	return h.SuccessResponse(c, http.StatusOK, "tokens were successfully refreshed", tokens)
 }

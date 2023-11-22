@@ -2,10 +2,19 @@ package main
 
 import (
 	"github.com/aerosystems/auth-service/internal/handlers"
-	TokenService "github.com/aerosystems/auth-service/pkg/token_service"
+	"github.com/aerosystems/auth-service/internal/middleware"
 )
 
 type Config struct {
-	BaseHandler  *handlers.BaseHandler
-	TokenService *TokenService.Service
+	baseHandler         *handlers.BaseHandler
+	oauthMiddleware     middleware.OAuthMiddleware
+	basicAuthMiddleware middleware.BasicAuthMiddleware
+}
+
+func NewConfig(baseHandler *handlers.BaseHandler, oauthMiddleware middleware.OAuthMiddleware, basicAuthMiddleware middleware.BasicAuthMiddleware) *Config {
+	return &Config{
+		baseHandler:         baseHandler,
+		oauthMiddleware:     oauthMiddleware,
+		basicAuthMiddleware: basicAuthMiddleware,
+	}
 }
