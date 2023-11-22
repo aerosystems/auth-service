@@ -74,7 +74,7 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: Auth Service
-  version: 1.0.7
+  version: 1.0.8
 paths:
   /v1/confirm:
     post:
