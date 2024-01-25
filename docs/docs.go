@@ -560,7 +560,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.8",
-	Host:             "gw.verifire.com/auth",
+	Host:             "gw.verifire.app/auth",
 	BasePath:         "/",
 	Schemes:          []string{"https"},
 	Title:            "Auth Service",
