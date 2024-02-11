@@ -16,14 +16,3 @@ type User struct {
 	CreatedAt    time.Time `json:"-"`
 	UpdatedAt    time.Time `json:"-"`
 }
-
-type UserRepository interface {
-	GetById(Id int) (*User, error)
-	GetByUserId(UserId int) (*User, error)
-	GetByUuid(Uuid uuid.UUID) (*User, error)
-	GetByEmail(Email string) (*User, error)
-	GetByGoogleId(GoogleId string) (*User, error)
-	Create(user *User) error
-	Update(user *User) error
-	Delete(user *User) error
-}
