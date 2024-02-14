@@ -9,7 +9,7 @@ package main
 import (
 	"github.com/aerosystems/auth-service/internal/config"
 	"github.com/aerosystems/auth-service/internal/http"
-	"github.com/aerosystems/auth-service/internal/presenters/rest"
+	"github.com/aerosystems/auth-service/internal/infrastructure/rest"
 	"github.com/aerosystems/auth-service/internal/repository/pg"
 	"github.com/aerosystems/auth-service/internal/repository/rpc"
 	"github.com/aerosystems/auth-service/internal/usecases"
