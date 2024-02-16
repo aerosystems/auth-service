@@ -10,6 +10,7 @@ import (
 	"github.com/aerosystems/auth-service/internal/config"
 	"github.com/aerosystems/auth-service/internal/http"
 	"github.com/aerosystems/auth-service/internal/infrastructure/rest"
+	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository/pg"
 	"github.com/aerosystems/auth-service/internal/repository/rpc"
 	"github.com/aerosystems/auth-service/internal/usecases"
@@ -106,7 +107,11 @@ func ProvideLogrusLogger(log *logger.Logger) *logrus.Logger {
 }
 
 func ProvideGormPostgres(e *logrus.Entry, cfg *config.Config) *gorm.DB {
-	return GormPostgres.NewClient(e, cfg.PostgresDSN)
+	db := GormPostgres.NewClient(e, cfg.PostgresDSN)
+	if err := db.AutoMigrate(&models.User{}, &models.Code{}); err != nil {
+		panic(err)
+	}
+	return db
 }
 
 func ProvideRedisClient(log *logger.Logger, cfg *config.Config) *redis.Client {

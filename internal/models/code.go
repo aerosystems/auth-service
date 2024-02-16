@@ -1,12 +1,10 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
 )
 
 type Code struct {
-	gorm.Model
 	Id        int       `json:"-" gorm:"primaryKey;unique;autoIncrement"`
 	Code      string    `json:"code"`
 	UserId    int       `json:"-"`
