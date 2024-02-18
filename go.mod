@@ -1,6 +1,6 @@
 module github.com/aerosystems/auth-service
 
-go 1.19
+go 1.22
 
 require (
 	github.com/go-playground/validator/v10 v10.15.5
