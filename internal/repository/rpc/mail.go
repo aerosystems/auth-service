@@ -1,4 +1,4 @@
-package rpcRepo
+package RpcRepo
 
 import (
 	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"

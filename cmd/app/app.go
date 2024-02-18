@@ -2,20 +2,20 @@ package main
 
 import (
 	"github.com/aerosystems/auth-service/internal/config"
-	HTTPServer "github.com/aerosystems/auth-service/internal/http"
+	HttpServer "github.com/aerosystems/auth-service/internal/http"
 	"github.com/sirupsen/logrus"
 )
 
 type App struct {
 	log        *logrus.Logger
 	cfg        *config.Config
-	httpServer *HTTPServer.Server
+	httpServer *HttpServer.Server
 }
 
 func NewApp(
 	log *logrus.Logger,
 	cfg *config.Config,
-	httpServer *HTTPServer.Server,
+	httpServer *HttpServer.Server,
 ) *App {
 	return &App{
 		log:        log,

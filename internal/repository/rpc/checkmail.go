@@ -1,4 +1,4 @@
-package rpcRepo
+package RpcRepo
 
 import (
 	"errors"

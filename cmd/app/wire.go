@@ -5,7 +5,7 @@ package main
 
 import (
 	"github.com/aerosystems/auth-service/internal/config"
-	HTTPServer "github.com/aerosystems/auth-service/internal/http"
+	HttpServer "github.com/aerosystems/auth-service/internal/http"
 	"github.com/aerosystems/auth-service/internal/infrastructure/rest"
 	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository/pg"
@@ -33,11 +33,11 @@ func InitApp() *App {
 		wire.Bind(new(usecases.CheckmailRepo), new(*rpcRepo.CheckmailRepo)),
 		wire.Bind(new(usecases.MailRepo), new(*rpcRepo.MailRepo)),
 		wire.Bind(new(usecases.CustomerRepo), new(*rpcRepo.CustomerRepo)),
-		wire.Bind(new(HTTPServer.TokenService), new(*OAuthService.AccessTokenService)),
+		wire.Bind(new(HttpServer.TokenService), new(*OAuthService.AccessTokenService)),
 		ProvideApp,
 		ProvideLogger,
 		ProvideConfig,
-		ProvideHTTPServer,
+		ProvideHttpServer,
 		ProvideLogrusLogger,
 		ProvideLogrusEntry,
 		ProvideGormPostgres,
@@ -57,7 +57,7 @@ func InitApp() *App {
 	))
 }
 
-func ProvideApp(log *logrus.Logger, cfg *config.Config, httpServer *HTTPServer.Server) *App {
+func ProvideApp(log *logrus.Logger, cfg *config.Config, httpServer *HttpServer.Server) *App {
 	panic(wire.Build(NewApp))
 }
 
@@ -69,8 +69,8 @@ func ProvideConfig() *config.Config {
 	panic(wire.Build(config.NewConfig))
 }
 
-func ProvideHTTPServer(log *logrus.Logger, userHandler *rest.UserHandler, tokenHandler *rest.TokenHandler, tokenService HTTPServer.TokenService) *HTTPServer.Server {
-	panic(wire.Build(HTTPServer.NewServer))
+func ProvideHttpServer(log *logrus.Logger, userHandler *rest.UserHandler, tokenHandler *rest.TokenHandler, tokenService HttpServer.TokenService) *HttpServer.Server {
+	panic(wire.Build(HttpServer.NewServer))
 }
 
 func ProvideLogrusEntry(log *logger.Logger) *logrus.Entry {

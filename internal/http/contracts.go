@@ -1,4 +1,4 @@
-package HTTPServer
+package HttpServer
 
 import OAuthService "github.com/aerosystems/auth-service/pkg/oauth"
 

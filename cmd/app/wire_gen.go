@@ -46,12 +46,12 @@ func InitApp() *App {
 	userHandler := ProvideUserHandler(baseHandler, tokenUsecase, userUsecase, codeUsecase)
 	tokenHandler := ProvideTokenHandler(baseHandler, tokenUsecase)
 	accessTokenService := ProvideAccessTokenService(config)
-	server := ProvideHTTPServer(logrusLogger, userHandler, tokenHandler, accessTokenService)
+	server := ProvideHttpServer(logrusLogger, userHandler, tokenHandler, accessTokenService)
 	app := ProvideApp(logrusLogger, config, server)
 	return app
 }
 
-func ProvideApp(log *logrus.Logger, cfg *config.Config, httpServer *HTTPServer.Server) *App {
+func ProvideApp(log *logrus.Logger, cfg *config.Config, httpServer *HttpServer.Server) *App {
 	app := NewApp(log, cfg, httpServer)
 	return app
 }
@@ -66,8 +66,8 @@ func ProvideConfig() *config.Config {
 	return configConfig
 }
 
-func ProvideHTTPServer(log *logrus.Logger, userHandler *rest.UserHandler, tokenHandler *rest.TokenHandler, tokenService HTTPServer.TokenService) *HTTPServer.Server {
-	server := HTTPServer.NewServer(log, userHandler, tokenHandler, tokenService)
+func ProvideHttpServer(log *logrus.Logger, userHandler *rest.UserHandler, tokenHandler *rest.TokenHandler, tokenService HttpServer.TokenService) *HttpServer.Server {
+	server := HttpServer.NewServer(log, userHandler, tokenHandler, tokenService)
 	return server
 }
 
@@ -130,19 +130,19 @@ func ProvideCodeRepo(db *gorm.DB, cfg *config.Config) *pg.CodeRepo {
 	return pg.NewCodeRepo(db, cfg.CodeExpMinutes)
 }
 
-func ProvideCheckmailRepo(cfg *config.Config) *rpcRepo.CheckmailRepo {
+func ProvideCheckmailRepo(cfg *config.Config) *RpcRepo.CheckmailRepo {
 	rpcClient := RPCClient.NewClient("tcp", cfg.CheckmailServiceRPCAddr)
-	return rpcRepo.NewCheckmailRepo(rpcClient)
+	return RpcRepo.NewCheckmailRepo(rpcClient)
 }
 
-func ProvideMailRepo(cfg *config.Config) *rpcRepo.MailRepo {
+func ProvideMailRepo(cfg *config.Config) *RpcRepo.MailRepo {
 	rpcClient := RPCClient.NewClient("tcp", cfg.MailServiceRPCAddr)
-	return rpcRepo.NewMailRepo(rpcClient)
+	return RpcRepo.NewMailRepo(rpcClient)
 }
 
-func ProvideCustomerRepo(cfg *config.Config) *rpcRepo.CustomerRepo {
+func ProvideCustomerRepo(cfg *config.Config) *RpcRepo.CustomerRepo {
 	rpcClient := RPCClient.NewClient("tcp", cfg.CustomerServiceRPCAddr)
-	return rpcRepo.NewCustomerRepo(rpcClient)
+	return RpcRepo.NewCustomerRepo(rpcClient)
 }
 
 func ProvideAccessTokenService(cfg *config.Config) *OAuthService.AccessTokenService {

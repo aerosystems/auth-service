@@ -7,18 +7,18 @@ import (
 )
 
 type Config struct {
-	Mode                    string `mapstructure:"MODE"`
-	PostgresDSN             string `mapstructure:"POSTGRES_DSN"`
-	RedisPassword           string `mapstructure:"REDIS_PASSWORD"`
-	RedisDSN                string `mapstructure:"REDIS_DSN"`
-	CheckmailServiceRPCAddr string `mapstructure:"CHECKMAIL_SERVICE_RPC_ADDR"`
-	MailServiceRPCAddr      string `mapstructure:"MAIL_SERVICE_RPC_ADDR"`
-	CustomerServiceRPCAddr  string `mapstructure:"CUSTOMER_SERVICE_RPC_ADDR"`
-	AccessSecret            string `mapstructure:"ACCESS_SECRET"`
-	AccessExpMinutes        int    `mapstructure:"ACCESS_EXP_MINUTES"`
-	RefreshSecret           string `mapstructure:"REFRESH_SECRET"`
-	RefreshExpMinutes       int    `mapstructure:"REFRESH_EXP_MINUTES"`
-	CodeExpMinutes          int    `mapstructure:"CODE_EXP_MINUTES"`
+	Mode                    string `mapstructure:"MODE" required:"true"`
+	PostgresDSN             string `mapstructure:"POSTGRES_DSN" required:"true"`
+	RedisPassword           string `mapstructure:"REDIS_PASSWORD" required:"true"`
+	RedisDSN                string `mapstructure:"REDIS_DSN" required:"true"`
+	CheckmailServiceRPCAddr string `mapstructure:"CHECKMAIL_SERVICE_RPC_ADDR" required:"true"`
+	MailServiceRPCAddr      string `mapstructure:"MAIL_SERVICE_RPC_ADDR" required:"true"`
+	CustomerServiceRPCAddr  string `mapstructure:"CUSTOMER_SERVICE_RPC_ADDR" required:"true"`
+	AccessSecret            string `mapstructure:"ACCESS_SECRET" required:"true"`
+	AccessExpMinutes        int    `mapstructure:"ACCESS_EXP_MINUTES" required:"true"`
+	RefreshSecret           string `mapstructure:"REFRESH_SECRET" required:"true"`
+	RefreshExpMinutes       int    `mapstructure:"REFRESH_EXP_MINUTES" required:"true"`
+	CodeExpMinutes          int    `mapstructure:"CODE_EXP_MINUTES" required:"true"`
 }
 
 func NewConfig() *Config {
