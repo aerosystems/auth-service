@@ -1,15 +1,15 @@
 package RpcRepo
 
 import (
-	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
+	RpcClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 	"github.com/google/uuid"
 )
 
 type CustomerRepo struct {
-	rpcClient *RPCClient.ReconnectRPCClient
+	rpcClient *RpcClient.ReconnectRpcClient
 }
 
-func NewCustomerRepo(rpcClient *RPCClient.ReconnectRPCClient) *CustomerRepo {
+func NewCustomerRepo(rpcClient *RpcClient.ReconnectRpcClient) *CustomerRepo {
 	return &CustomerRepo{
 		rpcClient: rpcClient,
 	}

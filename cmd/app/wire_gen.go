@@ -131,17 +131,17 @@ func ProvideCodeRepo(db *gorm.DB, cfg *config.Config) *pg.CodeRepo {
 }
 
 func ProvideCheckmailRepo(cfg *config.Config) *RpcRepo.CheckmailRepo {
-	rpcClient := RPCClient.NewClient("tcp", cfg.CheckmailServiceRPCAddr)
+	rpcClient := RpcClient.NewClient("tcp", cfg.CheckmailServiceRPCAddr)
 	return RpcRepo.NewCheckmailRepo(rpcClient)
 }
 
 func ProvideMailRepo(cfg *config.Config) *RpcRepo.MailRepo {
-	rpcClient := RPCClient.NewClient("tcp", cfg.MailServiceRPCAddr)
+	rpcClient := RpcClient.NewClient("tcp", cfg.MailServiceRPCAddr)
 	return RpcRepo.NewMailRepo(rpcClient)
 }
 
 func ProvideCustomerRepo(cfg *config.Config) *RpcRepo.CustomerRepo {
-	rpcClient := RPCClient.NewClient("tcp", cfg.CustomerServiceRPCAddr)
+	rpcClient := RpcClient.NewClient("tcp", cfg.CustomerServiceRPCAddr)
 	return RpcRepo.NewCustomerRepo(rpcClient)
 }
 

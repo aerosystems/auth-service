@@ -15,7 +15,7 @@ import (
 	"github.com/aerosystems/auth-service/pkg/logger"
 	OAuthService "github.com/aerosystems/auth-service/pkg/oauth"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
-	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
+	RpcClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 	"github.com/go-redis/redis/v7"
 	"github.com/google/wire"
 	"github.com/sirupsen/logrus"
@@ -126,17 +126,17 @@ func ProvideUserRepo(db *gorm.DB) *pg.UserRepo {
 }
 
 func ProvideCheckmailRepo(cfg *config.Config) *rpcRepo.CheckmailRepo {
-	rpcClient := RPCClient.NewClient("tcp", cfg.CheckmailServiceRPCAddr)
+	rpcClient := RpcClient.NewClient("tcp", cfg.CheckmailServiceRPCAddr)
 	return rpcRepo.NewCheckmailRepo(rpcClient)
 }
 
 func ProvideMailRepo(cfg *config.Config) *rpcRepo.MailRepo {
-	rpcClient := RPCClient.NewClient("tcp", cfg.MailServiceRPCAddr)
+	rpcClient := RpcClient.NewClient("tcp", cfg.MailServiceRPCAddr)
 	return rpcRepo.NewMailRepo(rpcClient)
 }
 
 func ProvideCustomerRepo(cfg *config.Config) *rpcRepo.CustomerRepo {
-	rpcClient := RPCClient.NewClient("tcp", cfg.CustomerServiceRPCAddr)
+	rpcClient := RpcClient.NewClient("tcp", cfg.CustomerServiceRPCAddr)
 	return rpcRepo.NewCustomerRepo(rpcClient)
 }
 

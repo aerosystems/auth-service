@@ -1,14 +1,14 @@
 package RpcRepo
 
 import (
-	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
+	RpcClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 )
 
 type MailRepo struct {
-	rpcClient *RPCClient.ReconnectRPCClient
+	rpcClient *RpcClient.ReconnectRpcClient
 }
 
-func NewMailRepo(rpcClient *RPCClient.ReconnectRPCClient) *MailRepo {
+func NewMailRepo(rpcClient *RpcClient.ReconnectRpcClient) *MailRepo {
 	return &MailRepo{
 		rpcClient: rpcClient,
 	}

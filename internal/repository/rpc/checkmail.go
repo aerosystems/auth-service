@@ -3,14 +3,14 @@ package RpcRepo
 import (
 	"errors"
 	"fmt"
-	RPCClient "github.com/aerosystems/auth-service/pkg/rpc_client"
+	RpcClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 )
 
 type CheckmailRepo struct {
-	rpcClient *RPCClient.ReconnectRPCClient
+	rpcClient *RpcClient.ReconnectRpcClient
 }
 
-func NewCheckmailRepo(rpcClient *RPCClient.ReconnectRPCClient) *CheckmailRepo {
+func NewCheckmailRepo(rpcClient *RpcClient.ReconnectRpcClient) *CheckmailRepo {
 	return &CheckmailRepo{
 		rpcClient: rpcClient,
 	}
