@@ -42,11 +42,11 @@ type UserRequestBody struct {
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param registration body handlers.UserRequestBody true "raw request body"
-// @Success 201 {object} handlers.Response
-// @Failure 400 {object} handlers.Response
-// @Failure 422 {object} handlers.Response
-// @Failure 500 {object} handlers.Response
+// @Param registration body UserRequestBody true "raw request body"
+// @Success 201 {object} Response
+// @Failure 400 {object} Response
+// @Failure 422 {object} Response
+// @Failure 500 {object} Response
 // @Router /v1/sign-up [post]
 func (uh UserHandler) SignUp(c echo.Context) error {
 	var requestPayload UserRequestBody
@@ -74,13 +74,13 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param login body handlers.UserRequestBody true "raw request body"
-// @Success 200 {object} handlers.Response{data=handlers.TokensResponseBody}
-// @Failure 400 {object} handlers.Response
-// @Failure 401 {object} handlers.Response
-// @Failure 404 {object} handlers.Response
-// @Failure 422 {object} handlers.Response
-// @Failure 500 {object} handlers.Response
+// @Param login body UserRequestBody true "raw request body"
+// @Success 200 {object} Response{data=TokensResponseBody}
+// @Failure 400 {object} Response
+// @Failure 401 {object} Response
+// @Failure 404 {object} Response
+// @Failure 422 {object} Response
+// @Failure 500 {object} Response
 // @Router /v1/sign-in [post]
 func (uh UserHandler) SignIn(c echo.Context) error {
 	var requestPayload UserRequestBody
@@ -111,9 +111,9 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 // @Accept  json
 // @Produce application/json
 // @Security BearerAuth
-// @Success 200 {object} handlers.Response
-// @Failure 401 {object} handlers.Response
-// @Failure 500 {object} handlers.Response
+// @Success 200 {object} Response
+// @Failure 401 {object} Response
+// @Failure 500 {object} Response
 // @Router /v1/sign-out [post]
 func (uh UserHandler) SignOut(c echo.Context) error {
 	accessTokenClaims := c.Get("accessTokenClaims").(*models.AccessTokenClaims)
@@ -130,10 +130,10 @@ func (uh UserHandler) SignOut(c echo.Context) error {
 // @Accept  json
 // @Produce application/json
 // @Security BearerAuth
-// @Success 200 {object} handlers.Response{data=models.User}
-// @Failure 401 {object} handlers.Response
-// @Failure 403 {object} handlers.Response
-// @Failure 500 {object} handlers.Response
+// @Success 200 {object} Response{data=models.User}
+// @Failure 401 {object} Response
+// @Failure 403 {object} Response
+// @Failure 500 {object} Response
 // @Router /v1/users [get]
 func (uh UserHandler) GetUser(c echo.Context) error {
 	accessTokenClaims := c.Get("accessTokenClaims").(*models.AccessTokenClaims)
@@ -149,11 +149,11 @@ func (uh UserHandler) GetUser(c echo.Context) error {
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param code body handlers.CodeRequestBody true "raw request body"
-// @Success 200 {object} handlers.Response
-// @Failure 400 {object} handlers.Response
-// @Failure 422 {object} handlers.Response
-// @Failure 500 {object} handlers.Response
+// @Param code body CodeRequestBody true "raw request body"
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
+// @Failure 422 {object} Response
+// @Failure 500 {object} Response
 // @Router /v1/confirm [post]
 func (uh UserHandler) Confirm(c echo.Context) error {
 	var requestPayload CodeRequestBody
@@ -184,11 +184,11 @@ func (uh UserHandler) Confirm(c echo.Context) error {
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param registration body handlers.UserRequestBody true "raw request body"
-// @Success 200 {object} handlers.Response
-// @Failure 400 {object} handlers.Response
-// @Failure 422 {object} handlers.Response
-// @Failure 500 {object} handlers.Response
+// @Param registration body UserRequestBody true "raw request body"
+// @Success 200 {object} Response
+// @Failure 400 {object} Response
+// @Failure 422 {object} Response
+// @Failure 500 {object} Response
 // @Router /v1/reset-password [post]
 func (uh UserHandler) ResetPassword(c echo.Context) error {
 	var requestPayload UserRequestBody

@@ -33,8 +33,8 @@ type RefreshTokenRequestBody struct {
 // @Accept  json
 // @Produce application/json
 // @Security BearerAuth
-// @Success 204 {object} handlers.Response
-// @Failure 401 {object} handlers.Response
+// @Success 204 {object} Response
+// @Failure 401 {object} Response
 // @Router /v1/token/validate [get]
 func (th TokenHandler) ValidateToken(c echo.Context) error {
 	accessTokenClaims := c.Get("accessTokenClaims").(*models.AccessTokenClaims)
@@ -49,12 +49,12 @@ func (th TokenHandler) ValidateToken(c echo.Context) error {
 // @Tags auth
 // @Accept  json
 // @Produce application/json
-// @Param login body handlers.RefreshTokenRequestBody true "raw request body, should contain Refresh Token"
-// @Success 200 {object} Response{data=handlers.TokensResponseBody}
-// @Failure 400 {object} handlers.Response
-// @Failure 401 {object} handlers.Response
-// @Failure 422 {object} handlers.Response
-// @Failure 500 {object} handlers.Response
+// @Param login body TokensResponseBody true "raw request body, should contain Refresh Token"
+// @Success 200 {object} Response{data=TokensResponseBody}
+// @Failure 400 {object} Response
+// @Failure 401 {object} Response
+// @Failure 422 {object} Response
+// @Failure 500 {object} Response
 // @Router /v1/token/refresh [post]
 func (th TokenHandler) RefreshToken(c echo.Context) error {
 	var requestPayload RefreshTokenRequestBody
