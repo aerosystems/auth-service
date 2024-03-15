@@ -23,7 +23,7 @@ type MailRPCPayload struct {
 func (ms *MailRepo) SendEmail(to, subject, body string) error {
 	var result string
 	if err := ms.rpcClient.Call(
-		"MailServer.SendEmail",
+		"Server.SendEmail",
 		MailRPCPayload{
 			To:      to,
 			Subject: subject,
