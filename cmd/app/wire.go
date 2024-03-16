@@ -5,8 +5,8 @@ package main
 
 import (
 	"github.com/aerosystems/auth-service/internal/config"
-	HttpServer "github.com/aerosystems/auth-service/internal/http"
-	"github.com/aerosystems/auth-service/internal/infrastructure/rest"
+	HttpServer "github.com/aerosystems/auth-service/internal/infrastructure/http"
+	"github.com/aerosystems/auth-service/internal/infrastructure/http/handlers"
 	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository/pg"
 	rpcRepo "github.com/aerosystems/auth-service/internal/repository/rpc"
@@ -24,9 +24,9 @@ import (
 //go:generate wire
 func InitApp() *App {
 	panic(wire.Build(
-		wire.Bind(new(rest.UserUsecase), new(*usecases.UserUsecase)),
-		wire.Bind(new(rest.CodeUsecase), new(*usecases.CodeUsecase)),
-		wire.Bind(new(rest.TokenUsecase), new(*usecases.TokenUsecase)),
+		wire.Bind(new(handlers.UserUsecase), new(*usecases.UserUsecase)),
+		wire.Bind(new(handlers.CodeUsecase), new(*usecases.CodeUsecase)),
+		wire.Bind(new(handlers.TokenUsecase), new(*usecases.TokenUsecase)),
 		wire.Bind(new(usecases.CodeRepository), new(*pg.CodeRepo)),
 		wire.Bind(new(usecases.UserRepository), new(*pg.UserRepo)),
 		wire.Bind(new(usecases.CheckmailRepo), new(*rpcRepo.CheckmailRepo)),
@@ -66,7 +66,7 @@ func ProvideConfig() *config.Config {
 	panic(wire.Build(config.NewConfig))
 }
 
-func ProvideHttpServer(log *logrus.Logger, cfg *config.Config, userHandler *rest.UserHandler, tokenHandler *rest.TokenHandler) *HttpServer.Server {
+func ProvideHttpServer(log *logrus.Logger, cfg *config.Config, userHandler *handlers.UserHandler, tokenHandler *handlers.TokenHandler) *HttpServer.Server {
 	return HttpServer.NewServer(log, cfg.AccessSecret, userHandler, tokenHandler)
 }
 
@@ -90,16 +90,16 @@ func ProvideRedisClient(log *logger.Logger, cfg *config.Config) *redis.Client {
 	return RedisClient.NewRedisClient(log, cfg.RedisDSN, cfg.RedisPassword)
 }
 
-func ProvideBaseHandler(log *logrus.Logger, cfg *config.Config) *rest.BaseHandler {
-	return rest.NewBaseHandler(log, cfg.Mode)
+func ProvideBaseHandler(log *logrus.Logger, cfg *config.Config) *handlers.BaseHandler {
+	return handlers.NewBaseHandler(log, cfg.Mode)
 }
 
-func ProvideUserHandler(baseHandler *rest.BaseHandler, tokenUsecase rest.TokenUsecase, userUsecase rest.UserUsecase, codeUsecase rest.CodeUsecase) *rest.UserHandler {
-	panic(wire.Build(rest.NewUserHandler))
+func ProvideUserHandler(baseHandler *handlers.BaseHandler, tokenUsecase handlers.TokenUsecase, userUsecase handlers.UserUsecase, codeUsecase handlers.CodeUsecase) *handlers.UserHandler {
+	panic(wire.Build(handlers.NewUserHandler))
 }
 
-func ProvideTokenHandler(baseHandler *rest.BaseHandler, tokenUsecase rest.TokenUsecase) *rest.TokenHandler {
-	panic(wire.Build(rest.NewTokenHandler))
+func ProvideTokenHandler(baseHandler *handlers.BaseHandler, tokenUsecase handlers.TokenUsecase) *handlers.TokenHandler {
+	panic(wire.Build(handlers.NewTokenHandler))
 }
 
 func ProvideUserUsecase(codeRepo usecases.CodeRepository, userRepo usecases.UserRepository, checkmailRepo usecases.CheckmailRepo, mailRepo usecases.MailRepo, customerRepo usecases.CustomerRepo) *usecases.UserUsecase {

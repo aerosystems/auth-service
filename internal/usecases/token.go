@@ -114,8 +114,8 @@ func (r *TokenUsecase) DecodeAccessToken(tokenString string) (*models.AccessToke
 	}
 }
 
-func (r *TokenUsecase) DropCacheTokens(accessTokenClaims models.AccessTokenClaims) error {
-	cacheJSON, _ := r.GetCacheValue(accessTokenClaims.AccessUuid)
+func (r *TokenUsecase) DropCacheTokens(accessUuid string) error {
+	cacheJSON, _ := r.GetCacheValue(accessUuid)
 	accessTokenCache := new(AccessTokenCache)
 	err := json.Unmarshal([]byte(*cacheJSON), accessTokenCache)
 	if err != nil {
@@ -127,7 +127,7 @@ func (r *TokenUsecase) DropCacheTokens(accessTokenClaims models.AccessTokenClaim
 		return err
 	}
 	// drop access token from Redis cache
-	err = r.DropCacheKey(accessTokenClaims.AccessUuid)
+	err = r.DropCacheKey(accessUuid)
 	if err != nil {
 		return err
 	}

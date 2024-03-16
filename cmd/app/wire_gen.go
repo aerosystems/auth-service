@@ -8,8 +8,8 @@ package main
 
 import (
 	"github.com/aerosystems/auth-service/internal/config"
-	"github.com/aerosystems/auth-service/internal/http"
-	"github.com/aerosystems/auth-service/internal/infrastructure/rest"
+	"github.com/aerosystems/auth-service/internal/infrastructure/http"
+	"github.com/aerosystems/auth-service/internal/infrastructure/http/handlers"
 	"github.com/aerosystems/auth-service/internal/models"
 	"github.com/aerosystems/auth-service/internal/repository/pg"
 	"github.com/aerosystems/auth-service/internal/repository/rpc"
@@ -64,13 +64,13 @@ func ProvideConfig() *config.Config {
 	return configConfig
 }
 
-func ProvideUserHandler(baseHandler *rest.BaseHandler, tokenUsecase rest.TokenUsecase, userUsecase rest.UserUsecase, codeUsecase rest.CodeUsecase) *rest.UserHandler {
-	userHandler := rest.NewUserHandler(baseHandler, tokenUsecase, userUsecase, codeUsecase)
+func ProvideUserHandler(baseHandler *handlers.BaseHandler, tokenUsecase handlers.TokenUsecase, userUsecase handlers.UserUsecase, codeUsecase handlers.CodeUsecase) *handlers.UserHandler {
+	userHandler := handlers.NewUserHandler(baseHandler, tokenUsecase, userUsecase, codeUsecase)
 	return userHandler
 }
 
-func ProvideTokenHandler(baseHandler *rest.BaseHandler, tokenUsecase rest.TokenUsecase) *rest.TokenHandler {
-	tokenHandler := rest.NewTokenHandler(baseHandler, tokenUsecase)
+func ProvideTokenHandler(baseHandler *handlers.BaseHandler, tokenUsecase handlers.TokenUsecase) *handlers.TokenHandler {
+	tokenHandler := handlers.NewTokenHandler(baseHandler, tokenUsecase)
 	return tokenHandler
 }
 
@@ -91,7 +91,7 @@ func ProvideUserRepo(db *gorm.DB) *pg.UserRepo {
 
 // wire.go:
 
-func ProvideHttpServer(log *logrus.Logger, cfg *config.Config, userHandler *rest.UserHandler, tokenHandler *rest.TokenHandler) *HttpServer.Server {
+func ProvideHttpServer(log *logrus.Logger, cfg *config.Config, userHandler *handlers.UserHandler, tokenHandler *handlers.TokenHandler) *HttpServer.Server {
 	return HttpServer.NewServer(log, cfg.AccessSecret, userHandler, tokenHandler)
 }
 
@@ -115,8 +115,8 @@ func ProvideRedisClient(log *logger.Logger, cfg *config.Config) *redis.Client {
 	return RedisClient.NewRedisClient(log, cfg.RedisDSN, cfg.RedisPassword)
 }
 
-func ProvideBaseHandler(log *logrus.Logger, cfg *config.Config) *rest.BaseHandler {
-	return rest.NewBaseHandler(log, cfg.Mode)
+func ProvideBaseHandler(log *logrus.Logger, cfg *config.Config) *handlers.BaseHandler {
+	return handlers.NewBaseHandler(log, cfg.Mode)
 }
 
 func ProvideTokenUsecase(redisClient *redis.Client, cfg *config.Config) *usecases.TokenUsecase {

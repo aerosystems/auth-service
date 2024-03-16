@@ -1,4 +1,4 @@
-package rest
+package handlers
 
 import (
 	"github.com/aerosystems/auth-service/internal/models"
@@ -117,7 +117,7 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 // @Router /v1/sign-out [post]
 func (uh UserHandler) SignOut(c echo.Context) error {
 	accessTokenClaims := c.Get("accessTokenClaims").(*models.AccessTokenClaims)
-	if err := uh.tokenUsecase.DropCacheTokens(*accessTokenClaims); err != nil {
+	if err := uh.tokenUsecase.DropCacheTokens(accessTokenClaims.AccessUuid); err != nil {
 		return uh.ErrorResponse(c, http.StatusInternalServerError, "could not logout user", err)
 	}
 	return uh.SuccessResponse(c, http.StatusOK, "user was successfully logged out", nil)

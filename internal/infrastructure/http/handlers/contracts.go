@@ -1,4 +1,4 @@
-package rest
+package handlers
 
 import "github.com/aerosystems/auth-service/internal/models"
 
@@ -7,7 +7,7 @@ type TokenUsecase interface {
 	CreateToken(userUuid string, userRole string) (*models.TokenDetails, error)
 	DecodeRefreshToken(tokenString string) (*models.RefreshTokenClaims, error)
 	DecodeAccessToken(tokenString string) (*models.AccessTokenClaims, error)
-	DropCacheTokens(accessTokenClaims models.AccessTokenClaims) error
+	DropCacheTokens(accessUuid string) error
 	DropCacheKey(Uuid string) error
 	GetCacheValue(Uuid string) (*string, error)
 }
