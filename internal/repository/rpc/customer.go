@@ -21,7 +21,7 @@ type CustomerRPCPayload struct {
 
 func (c *CustomerRepo) CreateCustomer() (uuid.UUID, error) {
 	result := CustomerRPCPayload{}
-	if err := c.rpcClient.Call("CustomerServer.CreateCustomer", "", &result); err != nil {
+	if err := c.rpcClient.Call("Server.CreateCustomer", "", &result); err != nil {
 		return uuid.UUID{}, err
 	}
 	return result.Uuid, nil

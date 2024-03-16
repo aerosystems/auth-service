@@ -13,7 +13,6 @@ import (
 	"github.com/aerosystems/auth-service/internal/usecases"
 	GormPostgres "github.com/aerosystems/auth-service/pkg/gorm_postgres"
 	"github.com/aerosystems/auth-service/pkg/logger"
-	OAuthService "github.com/aerosystems/auth-service/pkg/oauth"
 	RedisClient "github.com/aerosystems/auth-service/pkg/redis_client"
 	RpcClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 	"github.com/go-redis/redis/v7"
@@ -33,7 +32,6 @@ func InitApp() *App {
 		wire.Bind(new(usecases.CheckmailRepo), new(*rpcRepo.CheckmailRepo)),
 		wire.Bind(new(usecases.MailRepo), new(*rpcRepo.MailRepo)),
 		wire.Bind(new(usecases.CustomerRepo), new(*rpcRepo.CustomerRepo)),
-		wire.Bind(new(HttpServer.TokenService), new(*OAuthService.AccessTokenService)),
 		ProvideApp,
 		ProvideLogger,
 		ProvideConfig,
@@ -53,7 +51,6 @@ func InitApp() *App {
 		ProvideCheckmailRepo,
 		ProvideMailRepo,
 		ProvideCustomerRepo,
-		ProvideAccessTokenService,
 	))
 }
 
@@ -69,8 +66,8 @@ func ProvideConfig() *config.Config {
 	panic(wire.Build(config.NewConfig))
 }
 
-func ProvideHttpServer(log *logrus.Logger, userHandler *rest.UserHandler, tokenHandler *rest.TokenHandler, tokenService HttpServer.TokenService) *HttpServer.Server {
-	panic(wire.Build(HttpServer.NewServer))
+func ProvideHttpServer(log *logrus.Logger, cfg *config.Config, userHandler *rest.UserHandler, tokenHandler *rest.TokenHandler) *HttpServer.Server {
+	return HttpServer.NewServer(log, cfg.AccessSecret, userHandler, tokenHandler)
 }
 
 func ProvideLogrusEntry(log *logger.Logger) *logrus.Entry {
@@ -138,8 +135,4 @@ func ProvideMailRepo(cfg *config.Config) *rpcRepo.MailRepo {
 func ProvideCustomerRepo(cfg *config.Config) *rpcRepo.CustomerRepo {
 	rpcClient := RpcClient.NewClient("tcp", cfg.CustomerServiceRPCAddr)
 	return rpcRepo.NewCustomerRepo(rpcClient)
-}
-
-func ProvideAccessTokenService(cfg *config.Config) *OAuthService.AccessTokenService {
-	return OAuthService.NewAccessTokenService(cfg.AccessSecret)
 }
