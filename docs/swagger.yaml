@@ -1,5 +1,43 @@
 basePath: /
 definitions:
+  handlers.CodeRequestBody:
+    properties:
+      code:
+        example: "012345"
+        type: string
+    required:
+    - code
+    type: object
+  handlers.Response:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+  handlers.TokensResponseBody:
+    properties:
+      accessToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+      refreshToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+    required:
+    - accessToken
+    - refreshToken
+    type: object
+  handlers.UserRequestBody:
+    properties:
+      email:
+        example: example@gmail.com
+        type: string
+      password:
+        example: P@ssw0rd
+        type: string
+    required:
+    - email
+    - password
+    type: object
   models.KindRole:
     enum:
     - customer
@@ -16,44 +54,6 @@ definitions:
         $ref: '#/definitions/models.KindRole'
       uuid:
         type: string
-    type: object
-  rest.CodeRequestBody:
-    properties:
-      code:
-        example: "012345"
-        type: string
-    required:
-    - code
-    type: object
-  rest.Response:
-    properties:
-      data: {}
-      message:
-        type: string
-    type: object
-  rest.TokensResponseBody:
-    properties:
-      accessToken:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-        type: string
-      refreshToken:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-        type: string
-    required:
-    - accessToken
-    - refreshToken
-    type: object
-  rest.UserRequestBody:
-    properties:
-      email:
-        example: example@gmail.com
-        type: string
-      password:
-        example: P@ssw0rd
-        type: string
-    required:
-    - email
-    - password
     type: object
 host: gw.verifire.dev/auth
 info:
@@ -78,26 +78,26 @@ paths:
         name: code
         required: true
         schema:
-          $ref: '#/definitions/rest.CodeRequestBody'
+          $ref: '#/definitions/handlers.CodeRequestBody'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
       summary: confirm registration/reset password with 6-digit code from email/sms
       tags:
       - auth
@@ -118,26 +118,26 @@ paths:
         name: registration
         required: true
         schema:
-          $ref: '#/definitions/rest.UserRequestBody'
+          $ref: '#/definitions/handlers.UserRequestBody'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
       summary: resetting password
       tags:
       - auth
@@ -159,7 +159,7 @@ paths:
         name: login
         required: true
         schema:
-          $ref: '#/definitions/rest.UserRequestBody'
+          $ref: '#/definitions/handlers.UserRequestBody'
       produces:
       - application/json
       responses:
@@ -167,31 +167,31 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/rest.Response'
+            - $ref: '#/definitions/handlers.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/rest.TokensResponseBody'
+                  $ref: '#/definitions/handlers.TokensResponseBody'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
       summary: login user by credentials
       tags:
       - auth
@@ -205,15 +205,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
       security:
       - BearerAuth: []
       summary: logout user
@@ -236,26 +236,26 @@ paths:
         name: registration
         required: true
         schema:
-          $ref: '#/definitions/rest.UserRequestBody'
+          $ref: '#/definitions/handlers.UserRequestBody'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
       summary: registration user by credentials
       tags:
       - auth
@@ -269,7 +269,7 @@ paths:
         name: login
         required: true
         schema:
-          $ref: '#/definitions/rest.TokensResponseBody'
+          $ref: '#/definitions/handlers.TokensResponseBody'
       produces:
       - application/json
       responses:
@@ -277,27 +277,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/rest.Response'
+            - $ref: '#/definitions/handlers.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/rest.TokensResponseBody'
+                  $ref: '#/definitions/handlers.TokensResponseBody'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
       summary: refresh a pair of JWT tokens
       tags:
       - auth
@@ -311,11 +311,11 @@ paths:
         "204":
           description: No Content
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
       security:
       - BearerAuth: []
       summary: validate token
@@ -333,7 +333,7 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/rest.Response'
+            - $ref: '#/definitions/handlers.Response'
             - properties:
                 data:
                   $ref: '#/definitions/models.User'
@@ -341,15 +341,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/rest.Response'
+            $ref: '#/definitions/handlers.Response'
       security:
       - BearerAuth: []
       summary: Get user
