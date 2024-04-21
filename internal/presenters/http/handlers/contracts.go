@@ -12,15 +12,12 @@ type TokenUsecase interface {
 	GetCacheValue(Uuid string) (*string, error)
 }
 
-type CodeUsecase interface {
-	GetCode(code string) (*models.Code, error)
-}
-
-type UserUsecase interface {
+type AuthUsecase interface {
 	RegisterCustomer(email, password, clientIp string) error
 	Confirm(code *models.Code) error
 	ResetPassword(email, password string) error
 	CheckPassword(user *models.User, password string) (bool, error)
 	GetActiveUserByEmail(email string) (*models.User, error)
 	GetUserByUuid(uuid string) (*models.User, error)
+	GetCode(code string) (*models.Code, error)
 }

@@ -6,11 +6,8 @@ import (
 )
 
 type UserRepository interface {
-	GetById(Id int) (*models.User, error)
-	GetByUserId(UserId int) (*models.User, error)
 	GetByUuid(Uuid uuid.UUID) (*models.User, error)
 	GetByEmail(Email string) (*models.User, error)
-	GetByGoogleId(GoogleId string) (*models.User, error)
 	Create(user *models.User) error
 	Update(user *models.User) error
 	Delete(user *models.User) error
@@ -21,20 +18,18 @@ type CodeRepository interface {
 	GetByCode(value string) (*models.Code, error)
 	GetLastIsActiveCode(UserId int, Action string) (*models.Code, error)
 	Create(code *models.Code) error
-	Update(code *models.Code) error
 	UpdateWithAssociations(code *models.Code) error
-	ExtendExpiration(code *models.Code) error
-	Delete(code *models.Code) error
+	Update(code *models.Code) error
 }
 
-type CheckmailRepo interface {
+type CheckmailAdapter interface {
 	IsTrustEmail(email, clientIp string) (bool, error)
 }
 
-type MailRepo interface {
+type MailAdapter interface {
 	SendEmail(to, subject, body string) error
 }
 
-type CustomerRepo interface {
+type CustomerAdapter interface {
 	CreateCustomer() (uuid.UUID, error)
 }

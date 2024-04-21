@@ -8,11 +8,11 @@ package main
 
 import (
 	"github.com/aerosystems/auth-service/internal/config"
-	"github.com/aerosystems/auth-service/internal/infrastructure/http"
-	"github.com/aerosystems/auth-service/internal/infrastructure/http/handlers"
+	"github.com/aerosystems/auth-service/internal/infra/adapters/rpc"
+	"github.com/aerosystems/auth-service/internal/infra/repository/pg"
 	"github.com/aerosystems/auth-service/internal/models"
-	"github.com/aerosystems/auth-service/internal/repository/pg"
-	"github.com/aerosystems/auth-service/internal/repository/rpc"
+	"github.com/aerosystems/auth-service/internal/presenters/http"
+	"github.com/aerosystems/auth-service/internal/presenters/http/handlers"
 	"github.com/aerosystems/auth-service/internal/usecases"
 	"github.com/aerosystems/auth-service/pkg/gorm_postgres"
 	"github.com/aerosystems/auth-service/pkg/logger"
@@ -37,12 +37,11 @@ func InitApp() *App {
 	db := ProvideGormPostgres(entry, config)
 	codeRepo := ProvideCodeRepo(db, config)
 	userRepo := ProvideUserRepo(db)
-	checkmailRepo := ProvideCheckmailRepo(config)
-	mailRepo := ProvideMailRepo(config)
-	customerRepo := ProvideCustomerRepo(config)
-	userUsecase := ProvideUserUsecase(codeRepo, userRepo, checkmailRepo, mailRepo, customerRepo)
-	codeUsecase := ProvideCodeUsecase(codeRepo)
-	userHandler := ProvideUserHandler(baseHandler, tokenUsecase, userUsecase, codeUsecase)
+	checkmailAdapter := ProvideCheckmailRepo(config)
+	mailAdapter := ProvideMailRepo(config)
+	customerAdapter := ProvideCustomerRepo(config)
+	authUsecase := ProvideAuthUsecase(codeRepo, userRepo, checkmailAdapter, mailAdapter, customerAdapter, config)
+	userHandler := ProvideUserHandler(baseHandler, tokenUsecase, authUsecase)
 	tokenHandler := ProvideTokenHandler(baseHandler, tokenUsecase)
 	server := ProvideHttpServer(logrusLogger, config, userHandler, tokenHandler)
 	app := ProvideApp(logrusLogger, config, server)
@@ -64,24 +63,14 @@ func ProvideConfig() *config.Config {
 	return configConfig
 }
 
-func ProvideUserHandler(baseHandler *handlers.BaseHandler, tokenUsecase handlers.TokenUsecase, userUsecase handlers.UserUsecase, codeUsecase handlers.CodeUsecase) *handlers.UserHandler {
-	userHandler := handlers.NewUserHandler(baseHandler, tokenUsecase, userUsecase, codeUsecase)
+func ProvideUserHandler(baseHandler *handlers.BaseHandler, tokenUsecase handlers.TokenUsecase, authUsecase handlers.AuthUsecase) *handlers.UserHandler {
+	userHandler := handlers.NewUserHandler(baseHandler, tokenUsecase, authUsecase)
 	return userHandler
 }
 
 func ProvideTokenHandler(baseHandler *handlers.BaseHandler, tokenUsecase handlers.TokenUsecase) *handlers.TokenHandler {
 	tokenHandler := handlers.NewTokenHandler(baseHandler, tokenUsecase)
 	return tokenHandler
-}
-
-func ProvideUserUsecase(codeRepo usecases.CodeRepository, userRepo usecases.UserRepository, checkmailRepo usecases.CheckmailRepo, mailRepo usecases.MailRepo, customerRepo usecases.CustomerRepo) *usecases.UserUsecase {
-	userUsecase := usecases.NewUserUsecase(codeRepo, userRepo, checkmailRepo, mailRepo, customerRepo)
-	return userUsecase
-}
-
-func ProvideCodeUsecase(codeRepo usecases.CodeRepository) *usecases.CodeUsecase {
-	codeUsecase := usecases.NewCodeUsecase(codeRepo)
-	return codeUsecase
 }
 
 func ProvideUserRepo(db *gorm.DB) *pg.UserRepo {
@@ -119,6 +108,10 @@ func ProvideBaseHandler(log *logrus.Logger, cfg *config.Config) *handlers.BaseHa
 	return handlers.NewBaseHandler(log, cfg.Mode)
 }
 
+func ProvideAuthUsecase(codeRepo usecases.CodeRepository, userRepo usecases.UserRepository, checkmailRepo usecases.CheckmailAdapter, mailRepo usecases.MailAdapter, customerRepo usecases.CustomerAdapter, cfg *config.Config) *usecases.AuthUsecase {
+	return usecases.NewAuthUsecase(codeRepo, userRepo, checkmailRepo, mailRepo, customerRepo, cfg.CodeExpMinutes)
+}
+
 func ProvideTokenUsecase(redisClient *redis.Client, cfg *config.Config) *usecases.TokenUsecase {
 	return usecases.NewTokenUsecase(redisClient, cfg.AccessSecret, cfg.RefreshSecret, cfg.AccessExpMinutes, cfg.RefreshExpMinutes)
 }
@@ -127,17 +120,17 @@ func ProvideCodeRepo(db *gorm.DB, cfg *config.Config) *pg.CodeRepo {
 	return pg.NewCodeRepo(db, cfg.CodeExpMinutes)
 }
 
-func ProvideCheckmailRepo(cfg *config.Config) *RpcRepo.CheckmailRepo {
+func ProvideCheckmailRepo(cfg *config.Config) *RpcRepo.CheckmailAdapter {
 	rpcClient := RpcClient.NewClient("tcp", cfg.CheckmailServiceRPCAddr)
-	return RpcRepo.NewCheckmailRepo(rpcClient)
+	return RpcRepo.NewCheckmailAdapter(rpcClient)
 }
 
-func ProvideMailRepo(cfg *config.Config) *RpcRepo.MailRepo {
+func ProvideMailRepo(cfg *config.Config) *RpcRepo.MailAdapter {
 	rpcClient := RpcClient.NewClient("tcp", cfg.MailServiceRPCAddr)
-	return RpcRepo.NewMailRepo(rpcClient)
+	return RpcRepo.NewMailAdapter(rpcClient)
 }
 
-func ProvideCustomerRepo(cfg *config.Config) *RpcRepo.CustomerRepo {
+func ProvideCustomerRepo(cfg *config.Config) *RpcRepo.CustomerAdapter {
 	rpcClient := RpcClient.NewClient("tcp", cfg.CustomerServiceRPCAddr)
-	return RpcRepo.NewCustomerRepo(rpcClient)
+	return RpcRepo.NewCustomerAdapter(rpcClient)
 }

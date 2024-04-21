@@ -2,16 +2,15 @@ package RpcRepo
 
 import (
 	"errors"
-	"fmt"
 	RpcClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 )
 
-type CheckmailRepo struct {
+type CheckmailAdapter struct {
 	rpcClient *RpcClient.ReconnectRpcClient
 }
 
-func NewCheckmailRepo(rpcClient *RpcClient.ReconnectRpcClient) *CheckmailRepo {
-	return &CheckmailRepo{
+func NewCheckmailAdapter(rpcClient *RpcClient.ReconnectRpcClient) *CheckmailAdapter {
+	return &CheckmailAdapter{
 		rpcClient: rpcClient,
 	}
 }
@@ -21,16 +20,15 @@ type InspectRPCPayload struct {
 	ClientIp string
 }
 
-func (cs *CheckmailRepo) IsTrustEmail(email, clientIp string) (bool, error) {
+func (ca *CheckmailAdapter) IsTrustEmail(email, clientIp string) (bool, error) {
 	var result string
-	if err := cs.rpcClient.Call(
+	if err := ca.rpcClient.Call(
 		"Server.Inspect",
 		InspectRPCPayload{
 			Domain:   email,
 			ClientIp: clientIp,
 		},
 		&result); err != nil {
-		fmt.Println("could not check email in blacklist: ", err)
 		return false, errors.New("email address does not valid")
 	}
 

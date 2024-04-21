@@ -23,6 +23,13 @@ type TokensResponseBody struct {
 	RefreshToken string `json:"refreshToken" validate:"required,jwt" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
 }
 
+func ModelToResponseTokenDetails(tokenDetails *models.TokenDetails) *TokensResponseBody {
+	return &TokensResponseBody{
+		AccessToken:  tokenDetails.AccessToken,
+		RefreshToken: tokenDetails.RefreshToken,
+	}
+}
+
 type RefreshTokenRequestBody struct {
 	RefreshToken string `json:"refreshToken" validate:"required,jwt" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"`
 }
@@ -69,9 +76,5 @@ func (th TokenHandler) RefreshToken(c echo.Context) error {
 	if err != nil {
 		return th.ErrorResponse(c, http.StatusInternalServerError, "could not create a pair of JWT tokens", err)
 	}
-	tokens := TokensResponseBody{
-		AccessToken:  ts.AccessToken,
-		RefreshToken: ts.RefreshToken,
-	}
-	return th.SuccessResponse(c, http.StatusOK, "tokens were successfully refreshed", tokens)
+	return th.SuccessResponse(c, http.StatusOK, "tokens were successfully refreshed", ModelToResponseTokenDetails(ts))
 }

@@ -39,19 +39,25 @@ definitions:
     - password
     type: object
   models.KindRole:
-    enum:
-    - customer
-    - staff
-    type: string
-    x-enum-varnames:
-    - CustomerRole
-    - StaffRole
+    type: object
   models.User:
     properties:
+      createdAt:
+        type: string
       email:
+        type: string
+      googleId:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      passwordHash:
         type: string
       role:
         $ref: '#/definitions/models.KindRole'
+      updatedAt:
+        type: string
       uuid:
         type: string
     type: object

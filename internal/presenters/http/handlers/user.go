@@ -9,16 +9,14 @@ import (
 type UserHandler struct {
 	*BaseHandler
 	tokenUsecase TokenUsecase
-	userUsecase  UserUsecase
-	codeUsecase  CodeUsecase
+	authUsecase  AuthUsecase
 }
 
-func NewUserHandler(baseHandler *BaseHandler, tokenUsecase TokenUsecase, userUsecase UserUsecase, codeUsecase CodeUsecase) *UserHandler {
+func NewUserHandler(baseHandler *BaseHandler, tokenUsecase TokenUsecase, userUsecase AuthUsecase) *UserHandler {
 	return &UserHandler{
 		BaseHandler:  baseHandler,
 		tokenUsecase: tokenUsecase,
-		userUsecase:  userUsecase,
-		codeUsecase:  codeUsecase,
+		authUsecase:  userUsecase,
 	}
 }
 
@@ -29,6 +27,20 @@ type CodeRequestBody struct {
 type UserRequestBody struct {
 	Email    string `json:"email" validate:"required,email" example:"example@gmail.com"`
 	Password string `json:"password" validate:"required,customPasswordRule" example:"P@ssw0rd"`
+}
+
+type UserResponseBody struct {
+	Uuid  string `json:"uuid" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Email string `json:"email" example:"example@gmail.com"`
+	Role  string `json:"role" example:"customer"`
+}
+
+func ModelToResponse(user *models.User) *UserResponseBody {
+	return &UserResponseBody{
+		Uuid:  user.Uuid.String(),
+		Email: user.Email,
+		Role:  user.Role.String(),
+	}
 }
 
 // SignUp godoc
@@ -56,7 +68,7 @@ func (uh UserHandler) SignUp(c echo.Context) error {
 	if err := c.Validate(requestPayload); err != nil {
 		return err
 	}
-	if err := uh.userUsecase.RegisterCustomer(requestPayload.Email, requestPayload.Password, c.RealIP()); err != nil {
+	if err := uh.authUsecase.RegisterCustomer(requestPayload.Email, requestPayload.Password, c.RealIP()); err != nil {
 		return uh.ErrorResponse(c, http.StatusInternalServerError, "could not register user", err)
 	}
 	return uh.SuccessResponse(c, http.StatusCreated, "user was successfully registered", nil)
@@ -87,22 +99,18 @@ func (uh UserHandler) SignIn(c echo.Context) error {
 	if err := c.Bind(&requestPayload); err != nil {
 		return uh.ErrorResponse(c, http.StatusUnprocessableEntity, "could not read request body", err)
 	}
-	user, err := uh.userUsecase.GetActiveUserByEmail(requestPayload.Email)
+	user, err := uh.authUsecase.GetActiveUserByEmail(requestPayload.Email)
 	if err != nil {
 		return uh.ErrorResponse(c, http.StatusNotFound, "user not found", err)
 	}
-	if _, err := uh.userUsecase.CheckPassword(user, requestPayload.Password); err != nil {
+	if _, err := uh.authUsecase.CheckPassword(user, requestPayload.Password); err != nil {
 		return uh.ErrorResponse(c, http.StatusUnauthorized, "invalid credentials", err)
 	}
 	ts, err := uh.tokenUsecase.CreateToken(user.Uuid.String(), user.Role.String())
 	if err != nil {
 		return uh.ErrorResponse(c, http.StatusInternalServerError, "could not create a pair of JWT tokens", err)
 	}
-	tokens := TokensResponseBody{
-		AccessToken:  ts.AccessToken,
-		RefreshToken: ts.RefreshToken,
-	}
-	return uh.SuccessResponse(c, http.StatusOK, "user was successfully logged in", tokens)
+	return uh.SuccessResponse(c, http.StatusOK, "user was successfully logged in", ModelToResponseTokenDetails(ts))
 }
 
 // SignOut godoc
@@ -137,11 +145,11 @@ func (uh UserHandler) SignOut(c echo.Context) error {
 // @Router /v1/users [get]
 func (uh UserHandler) GetUser(c echo.Context) error {
 	accessTokenClaims := c.Get("accessTokenClaims").(*models.AccessTokenClaims)
-	user, err := uh.userUsecase.GetUserByUuid(accessTokenClaims.UserUuid)
+	user, err := uh.authUsecase.GetUserByUuid(accessTokenClaims.UserUuid)
 	if err != nil {
 		return uh.ErrorResponse(c, http.StatusInternalServerError, "could not get user", err)
 	}
-	return uh.SuccessResponse(c, http.StatusOK, "user was successfully found", user)
+	return uh.SuccessResponse(c, http.StatusOK, "user was successfully found", ModelToResponse(user))
 }
 
 // Confirm godoc
@@ -163,11 +171,11 @@ func (uh UserHandler) Confirm(c echo.Context) error {
 	if err := c.Validate(requestPayload); err != nil {
 		return err
 	}
-	code, err := uh.codeUsecase.GetCode(requestPayload.Code)
+	code, err := uh.authUsecase.GetCode(requestPayload.Code)
 	if err != nil {
 		return uh.ErrorResponse(c, http.StatusBadRequest, err.Error(), err)
 	}
-	if err := uh.userUsecase.Confirm(code); err != nil {
+	if err := uh.authUsecase.Confirm(code); err != nil {
 		return uh.ErrorResponse(c, http.StatusInternalServerError, "could not confirm user", err)
 	}
 	return uh.SuccessResponse(c, http.StatusOK, "code was successfully confirmed", nil)
@@ -195,7 +203,7 @@ func (uh UserHandler) ResetPassword(c echo.Context) error {
 	if err := c.Bind(&requestPayload); err != nil {
 		return uh.ErrorResponse(c, http.StatusUnprocessableEntity, "could not read request body", err)
 	}
-	if err := uh.userUsecase.ResetPassword(requestPayload.Email, requestPayload.Password); err != nil {
+	if err := uh.authUsecase.ResetPassword(requestPayload.Email, requestPayload.Password); err != nil {
 		return uh.ErrorResponse(c, http.StatusInternalServerError, "could not reset password", err)
 	}
 	return uh.SuccessResponse(c, http.StatusOK, "password was successfully reset", nil)

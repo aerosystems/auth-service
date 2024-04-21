@@ -5,11 +5,11 @@ package main
 
 import (
 	"github.com/aerosystems/auth-service/internal/config"
-	HttpServer "github.com/aerosystems/auth-service/internal/infrastructure/http"
-	"github.com/aerosystems/auth-service/internal/infrastructure/http/handlers"
+	rpcRepo "github.com/aerosystems/auth-service/internal/infra/adapters/rpc"
+	"github.com/aerosystems/auth-service/internal/infra/repository/pg"
 	"github.com/aerosystems/auth-service/internal/models"
-	"github.com/aerosystems/auth-service/internal/repository/pg"
-	rpcRepo "github.com/aerosystems/auth-service/internal/repository/rpc"
+	HttpServer "github.com/aerosystems/auth-service/internal/presenters/http"
+	"github.com/aerosystems/auth-service/internal/presenters/http/handlers"
 	"github.com/aerosystems/auth-service/internal/usecases"
 	GormPostgres "github.com/aerosystems/auth-service/pkg/gorm_postgres"
 	"github.com/aerosystems/auth-service/pkg/logger"
@@ -24,14 +24,13 @@ import (
 //go:generate wire
 func InitApp() *App {
 	panic(wire.Build(
-		wire.Bind(new(handlers.UserUsecase), new(*usecases.UserUsecase)),
-		wire.Bind(new(handlers.CodeUsecase), new(*usecases.CodeUsecase)),
+		wire.Bind(new(handlers.AuthUsecase), new(*usecases.AuthUsecase)),
 		wire.Bind(new(handlers.TokenUsecase), new(*usecases.TokenUsecase)),
 		wire.Bind(new(usecases.CodeRepository), new(*pg.CodeRepo)),
 		wire.Bind(new(usecases.UserRepository), new(*pg.UserRepo)),
-		wire.Bind(new(usecases.CheckmailRepo), new(*rpcRepo.CheckmailRepo)),
-		wire.Bind(new(usecases.MailRepo), new(*rpcRepo.MailRepo)),
-		wire.Bind(new(usecases.CustomerRepo), new(*rpcRepo.CustomerRepo)),
+		wire.Bind(new(usecases.CheckmailAdapter), new(*rpcRepo.CheckmailAdapter)),
+		wire.Bind(new(usecases.MailAdapter), new(*rpcRepo.MailAdapter)),
+		wire.Bind(new(usecases.CustomerAdapter), new(*rpcRepo.CustomerAdapter)),
 		ProvideApp,
 		ProvideLogger,
 		ProvideConfig,
@@ -43,8 +42,7 @@ func InitApp() *App {
 		ProvideBaseHandler,
 		ProvideUserHandler,
 		ProvideTokenHandler,
-		ProvideUserUsecase,
-		ProvideCodeUsecase,
+		ProvideAuthUsecase,
 		ProvideTokenUsecase,
 		ProvideCodeRepo,
 		ProvideUserRepo,
@@ -94,7 +92,7 @@ func ProvideBaseHandler(log *logrus.Logger, cfg *config.Config) *handlers.BaseHa
 	return handlers.NewBaseHandler(log, cfg.Mode)
 }
 
-func ProvideUserHandler(baseHandler *handlers.BaseHandler, tokenUsecase handlers.TokenUsecase, userUsecase handlers.UserUsecase, codeUsecase handlers.CodeUsecase) *handlers.UserHandler {
+func ProvideUserHandler(baseHandler *handlers.BaseHandler, tokenUsecase handlers.TokenUsecase, authUsecase handlers.AuthUsecase) *handlers.UserHandler {
 	panic(wire.Build(handlers.NewUserHandler))
 }
 
@@ -102,12 +100,8 @@ func ProvideTokenHandler(baseHandler *handlers.BaseHandler, tokenUsecase handler
 	panic(wire.Build(handlers.NewTokenHandler))
 }
 
-func ProvideUserUsecase(codeRepo usecases.CodeRepository, userRepo usecases.UserRepository, checkmailRepo usecases.CheckmailRepo, mailRepo usecases.MailRepo, customerRepo usecases.CustomerRepo) *usecases.UserUsecase {
-	panic(wire.Build(usecases.NewUserUsecase))
-}
-
-func ProvideCodeUsecase(codeRepo usecases.CodeRepository) *usecases.CodeUsecase {
-	panic(wire.Build(usecases.NewCodeUsecase))
+func ProvideAuthUsecase(codeRepo usecases.CodeRepository, userRepo usecases.UserRepository, checkmailRepo usecases.CheckmailAdapter, mailRepo usecases.MailAdapter, customerRepo usecases.CustomerAdapter, cfg *config.Config) *usecases.AuthUsecase {
+	return usecases.NewAuthUsecase(codeRepo, userRepo, checkmailRepo, mailRepo, customerRepo, cfg.CodeExpMinutes)
 }
 
 func ProvideTokenUsecase(redisClient *redis.Client, cfg *config.Config) *usecases.TokenUsecase {
@@ -122,17 +116,17 @@ func ProvideUserRepo(db *gorm.DB) *pg.UserRepo {
 	panic(wire.Build(pg.NewUserRepo))
 }
 
-func ProvideCheckmailRepo(cfg *config.Config) *rpcRepo.CheckmailRepo {
+func ProvideCheckmailRepo(cfg *config.Config) *rpcRepo.CheckmailAdapter {
 	rpcClient := RpcClient.NewClient("tcp", cfg.CheckmailServiceRPCAddr)
-	return rpcRepo.NewCheckmailRepo(rpcClient)
+	return rpcRepo.NewCheckmailAdapter(rpcClient)
 }
 
-func ProvideMailRepo(cfg *config.Config) *rpcRepo.MailRepo {
+func ProvideMailRepo(cfg *config.Config) *rpcRepo.MailAdapter {
 	rpcClient := RpcClient.NewClient("tcp", cfg.MailServiceRPCAddr)
-	return rpcRepo.NewMailRepo(rpcClient)
+	return rpcRepo.NewMailAdapter(rpcClient)
 }
 
-func ProvideCustomerRepo(cfg *config.Config) *rpcRepo.CustomerRepo {
+func ProvideCustomerRepo(cfg *config.Config) *rpcRepo.CustomerAdapter {
 	rpcClient := RpcClient.NewClient("tcp", cfg.CustomerServiceRPCAddr)
-	return rpcRepo.NewCustomerRepo(rpcClient)
+	return rpcRepo.NewCustomerAdapter(rpcClient)
 }

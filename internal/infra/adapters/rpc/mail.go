@@ -4,12 +4,12 @@ import (
 	RpcClient "github.com/aerosystems/auth-service/pkg/rpc_client"
 )
 
-type MailRepo struct {
+type MailAdapter struct {
 	rpcClient *RpcClient.ReconnectRpcClient
 }
 
-func NewMailRepo(rpcClient *RpcClient.ReconnectRpcClient) *MailRepo {
-	return &MailRepo{
+func NewMailAdapter(rpcClient *RpcClient.ReconnectRpcClient) *MailAdapter {
+	return &MailAdapter{
 		rpcClient: rpcClient,
 	}
 }
@@ -20,9 +20,9 @@ type MailRPCPayload struct {
 	Body    string
 }
 
-func (ms *MailRepo) SendEmail(to, subject, body string) error {
+func (ma *MailAdapter) SendEmail(to, subject, body string) error {
 	var result string
-	if err := ms.rpcClient.Call(
+	if err := ma.rpcClient.Call(
 		"Server.SendEmail",
 		MailRPCPayload{
 			To:      to,
