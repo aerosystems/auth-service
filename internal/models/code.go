@@ -1,31 +1,43 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
 )
 
 type Code struct {
-	gorm.Model
-	Id        int       `json:"-" gorm:"primaryKey;unique;autoIncrement"`
-	Code      string    `json:"code"`
-	UserId    int       `json:"-"`
-	User      User      `json:"-" gorm:"foreignKey:UserId"`
-	Action    KindCode  `json:"-"`
-	Data      string    `json:"-"`
-	IsUsed    bool      `json:"-"`
-	ExpireAt  time.Time `json:"-"`
-	CreatedAt time.Time `json:"-"`
-	UpdatedAt time.Time `json:"-"`
+	Id        int
+	Code      string
+	UserId    int
+	User      User
+	Action    KindCode
+	Data      string
+	IsUsed    bool
+	ExpireAt  time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
-type CodeRepository interface {
-	GetById(Id int) (*Code, error)
-	GetByCode(value string) (*Code, error)
-	GetLastIsActiveCode(UserId int, Action string) (*Code, error)
-	Create(code *Code) error
-	Update(code *Code) error
-	UpdateWithAssociations(code *Code) error
-	ExtendExpiration(code *Code) error
-	Delete(code *Code) error
+type KindCode struct {
+	slug string
+}
+
+var (
+	UnknownCode       = KindCode{"unknown"}
+	RegistrationCode  = KindCode{"registration"}
+	ResetPasswordCode = KindCode{"resetPassword"}
+)
+
+func (k KindCode) String() string {
+	return k.slug
+}
+
+func CodeFromString(s string) KindCode {
+	switch s {
+	case "registration":
+		return RegistrationCode
+	case "resetPassword":
+		return ResetPasswordCode
+	default:
+		return UnknownCode
+	}
 }

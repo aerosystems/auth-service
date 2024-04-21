@@ -311,7 +311,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.RefreshTokenRequestBody"
+                            "$ref": "#/definitions/handlers.TokensResponseBody"
                         }
                     }
                 ],
@@ -466,18 +466,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.RefreshTokenRequestBody": {
-            "type": "object",
-            "required": [
-                "refreshToken"
-            ],
-            "properties": {
-                "refreshToken": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-                }
-            }
-        },
         "handlers.Response": {
             "type": "object",
             "properties": {
@@ -522,24 +510,34 @@ const docTemplate = `{
             }
         },
         "models.KindRole": {
-            "type": "string",
-            "enum": [
-                "customer",
-                "staff"
-            ],
-            "x-enum-varnames": [
-                "CustomerRole",
-                "StaffRole"
-            ]
+            "type": "object"
         },
         "models.User": {
             "type": "object",
             "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
                 "email": {
+                    "type": "string"
+                },
+                "googleId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "passwordHash": {
                     "type": "string"
                 },
                 "role": {
                     "$ref": "#/definitions/models.KindRole"
+                },
+                "updatedAt": {
+                    "type": "string"
                 },
                 "uuid": {
                     "type": "string"
@@ -560,7 +558,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.8",
-	Host:             "gw.verifire.com/auth",
+	Host:             "gw.verifire.dev/auth",
 	BasePath:         "/",
 	Schemes:          []string{"https"},
 	Title:            "Auth Service",

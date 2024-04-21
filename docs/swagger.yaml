@@ -8,14 +8,6 @@ definitions:
     required:
     - code
     type: object
-  handlers.RefreshTokenRequestBody:
-    properties:
-      refreshToken:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-        type: string
-    required:
-    - refreshToken
-    type: object
   handlers.Response:
     properties:
       data: {}
@@ -47,23 +39,29 @@ definitions:
     - password
     type: object
   models.KindRole:
-    enum:
-    - customer
-    - staff
-    type: string
-    x-enum-varnames:
-    - CustomerRole
-    - StaffRole
+    type: object
   models.User:
     properties:
+      createdAt:
+        type: string
       email:
+        type: string
+      googleId:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      passwordHash:
         type: string
       role:
         $ref: '#/definitions/models.KindRole'
+      updatedAt:
+        type: string
       uuid:
         type: string
     type: object
-host: gw.verifire.com/auth
+host: gw.verifire.dev/auth
 info:
   contact:
     name: Artem Kostenko
@@ -277,7 +275,7 @@ paths:
         name: login
         required: true
         schema:
-          $ref: '#/definitions/handlers.RefreshTokenRequestBody'
+          $ref: '#/definitions/handlers.TokensResponseBody'
       produces:
       - application/json
       responses:
