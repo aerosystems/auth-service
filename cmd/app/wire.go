@@ -5,8 +5,8 @@ package main
 
 import (
 	"github.com/aerosystems/auth-service/internal/config"
-	rpcRepo "github.com/aerosystems/auth-service/internal/infra/adapters/rpc"
-	"github.com/aerosystems/auth-service/internal/infra/repository/pg"
+	rpcRepo "github.com/aerosystems/auth-service/internal/infrastructure/adapters/rpc"
+	"github.com/aerosystems/auth-service/internal/infrastructure/repository/pg"
 	"github.com/aerosystems/auth-service/internal/models"
 	HttpServer "github.com/aerosystems/auth-service/internal/presenters/http"
 	"github.com/aerosystems/auth-service/internal/presenters/http/handlers"
